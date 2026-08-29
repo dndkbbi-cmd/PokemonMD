@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player Profile</title>
+<style>
+  :root {
+    --bg: #15161a;
+    --panel: #1e2025;
+    --panel2: #24262c;
+    --border: #2c2f36;
+    --text: #e9e9ee;
+    --text-dim: #9a9ca5;
+    --accent: #8b93f8;
+    --accent-dim: #4a4f8f;
+    --good: #6fd08c;
+    --bad: #e0787a;
+    --warn: #e0b877;
+
+    --item-icon-size: 32px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    font-size: 14px;
+  }
+  h1 { font-size: 20px; margin: 0; }
+  h2 { font-size: 13px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .topbar-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  button { font-family: inherit; cursor: pointer; }
+  .btn {
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--text); font-size: 13px;
+  }
+  .btn:hover { border-color: var(--accent-dim); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #14151a; font-weight: 600; }
+  .btn.primary:hover { opacity: .9; }
+  .btn.small { padding: 4px 9px; font-size: 12px; border-radius: 6px; }
+  .btn.danger { color: var(--bad); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; margin-bottom: 16px;
+  }
+
+  .search-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .search-row input {
+    flex: 1; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 8px 10px; color: var(--text); font-size: 13px;
+  }
+  .search-results { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; max-height: 220px; overflow-y: auto; }
+
+  .field-row { margin-bottom: 10px; }
+  .field-row label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .field-row input, .field-row select, .field-row textarea {
+    width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 9px; color: var(--text); font-size: 13px;
+  }
+  .field-row textarea { font-family: ui-monospace, monospace; font-size: 12px; resize: vertical; }
+  .field-grid.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .field-grid.two { grid-template-columns: 1fr; } }
+
+  .card-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+  .empty-note { font-size: 12px; color: var(--text-dim); font-style: italic; padding: 6px 2px; }
+  .note { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; }
+
+  .type-badge {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .03em; padding: 1px 6px;
+    border-radius: 4px; background: var(--border); color: var(--text-dim);
+  }
+  .card-types { display: flex; gap: 4px; }
+
+  .tag {
+    display: inline-flex; align-items: center; font-size: 11px; padding: 3px 8px; border-radius: 100px; cursor: pointer;
+    border: 1px solid var(--accent-dim); background: rgba(139,147,248,0.12); color: var(--accent);
+  }
+  .tag:hover { opacity: .7; }
+  .tag-img { width: 16px; height: 16px; margin-right: 5px; image-rendering: pixelated; }
+
+  .poke-section-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+  .panel-summary {
+    font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim);
+    cursor: pointer; list-style: revert; user-select: none;
+  }
+  .panel-summary:hover { color: var(--text); }
+  .panel-summary-body { margin-top: 12px; }
+
+  /* Pokémon panel */
+  .hero { text-align: center; margin-bottom: 10px; }
+  .hero-img { width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; }
+  .hero-name { font-size: 18px; font-weight: 600; margin: 2px 0 6px; }
+  .hero .card-types { justify-content: center; }
+
+  .level-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 16px 0 4px; }
+  .level-badge { font-size: 14px; font-weight: 600; min-width: 190px; text-align: center; }
+  .level-mainline { display: block; font-size: 11px; color: var(--text-dim); font-weight: 400; margin-top: 1px; }
+  .points-pool { text-align: center; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+  .points-pool.has-points { color: var(--accent); font-weight: 600; }
+
+  .alloc-list { border-top: 1px solid var(--border); margin-top: 6px; }
+  .alloc-row {
+    display: grid; grid-template-columns: 66px 1fr auto 40px; align-items: center; gap: 8px;
+    padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .alloc-label { color: var(--text-dim); }
+  .alloc-base { color: var(--text-dim); font-size: 11.5px; }
+  .alloc-controls { display: flex; gap: 5px; }
+  .alloc-controls .btn { width: 26px; padding: 2px 0; text-align: center; }
+  .alloc-total { text-align: right; font-size: 14px; }
+
+  .held-item-row, .evo-section { margin-top: 18px; }
+
+  .evo-path {
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; margin-top: 8px; background: var(--panel2);
+  }
+  .evo-path.ready { border-color: var(--good); background: rgba(111,208,140,0.08); }
+  .evo-path-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .evo-name { font-weight: 600; font-size: 13px; }
+
+  /* Inventory panel */
+  .inv-topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  .pd-field label, .slot-field label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .pd-field input {
+    width: 130px; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 9px; color: var(--text); font-size: 13px;
+  }
+  .slot-count { font-size: 13px; font-weight: 600; }
+  .expand-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 14px; padding: 10px; border: 1px dashed var(--border); border-radius: 8px; }
+  .expand-row .note { margin: 0; }
+
+  .inv-list { display: flex; flex-direction: column; gap: 8px; height: 300px; overflow-y: auto; margin: 6px 0 12px; padding-right: 2px; }
+  .inv-item {
+    display: flex; align-items: flex-start; gap: 14px; border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 12px; background: var(--panel2); cursor: pointer;
+  }
+  .inv-item:hover { border-color: var(--accent-dim); }
+  .inv-item.selected { border-color: var(--accent); background: rgba(139,147,248,0.1); }
+  .inv-item img { width: var(--item-icon-size); height: var(--item-icon-size); object-fit: contain; flex-shrink: 0; }
+  .inv-item-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .inv-item-name { font-size: 14px; }
+  .inv-item-desc { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+  .inv-actions { display: flex; gap: 8px; margin: 4px 0 4px; }
+
+  /* Reward panel */
+  .reward-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  @media (max-width: 560px) { .reward-grid { grid-template-columns: repeat(2, 1fr); } }
+  .reward-btn { padding: 12px 8px; text-align: center; white-space: normal; line-height: 1.3; }
+  .reward-result {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border: 1px solid var(--accent-dim); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+    background: rgba(139,147,248,0.06); font-size: 13px;
+  }
+
+  .shop-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .shop-tab.active { border-color: var(--accent); color: var(--accent); }
+  .shop-level-row { display: flex; gap: 6px; margin-bottom: 10px; }
+  .shop-level-btn.active { border-color: var(--warn); color: var(--warn); }
+  .shop-list { display: flex; flex-direction: column; gap: 8px; height: 300px; overflow-y: auto; padding-right: 2px; }
+  .shop-item { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--panel2); }
+  .shop-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .shop-item-name { font-size: 13px; }
+  .shop-item-icon { width: 20px; height: 20px; image-rendering: pixelated; vertical-align: middle; margin-right: 6px; }
+  .shop-item-price { font-size: 12px; color: var(--warn); font-weight: 600; flex-shrink: 0; }
+  .shop-item-desc { font-size: 11px; color: var(--text-dim); margin: 4px 0 8px; line-height: 1.4; }
+
+  .sell-list { display: flex; flex-direction: column; gap: 8px; height: 300px; overflow-y: auto; padding-right: 2px; }
+  .sell-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; background: var(--panel2); cursor: pointer; }
+  .sell-row img { width: 24px; height: 24px; object-fit: contain; image-rendering: pixelated; flex-shrink: 0; }
+  .sell-name { flex: 1; font-size: 13px; }
+  .sell-price { font-size: 12px; color: var(--warn); }
+  .sell-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .sell-total { font-size: 12px; color: var(--text-dim); }
+
+  /* Moves & Ability */
+  .moves-section, .ability-section { margin-top: 18px; }
+  .move-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .move-tag { border-color: var(--good); background: rgba(111,208,140,0.1); color: var(--good); cursor: pointer; }
+  .move-tag:hover { opacity: .8; }
+  .move-tag.active { border-color: var(--accent); background: rgba(139,147,248,0.15); color: var(--accent); }
+
+  .move-info-box {
+    border: 1px solid var(--accent-dim); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+    background: rgba(139,147,248,0.06);
+  }
+  .move-info-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .move-info-top b { font-size: 13px; text-transform: capitalize; }
+  .move-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  @media (max-width: 480px) { .move-info-grid { grid-template-columns: repeat(2, 1fr); } }
+  .move-info-grid > div { display: flex; flex-direction: column; }
+  .move-info-grid .k { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); }
+  .move-info-grid .v { font-size: 14px; font-weight: 600; text-transform: capitalize; }
+
+  /* Move range widget */
+  .range-widget { margin-top: 10px; }
+  .range-widget-label {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text-dim); margin-bottom: 6px;
+  }
+  .range-widget-label-only .range-widget-label {
+    text-transform: none; font-size: 12.5px; color: var(--text); letter-spacing: 0; font-weight: 600;
+  }
+  .range-grid {
+    display: grid;
+    grid-template-columns: repeat(11, 14px);
+    grid-template-rows: repeat(11, 14px);
+    gap: 2px;
+  }
+  .range-grid .tile {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: transparent;
+  }
+  .range-grid .tile.hit {
+    background: var(--accent); border-color: var(--accent);
+    box-shadow: 0 0 6px rgba(139,147,248,0.7), inset 0 0 4px rgba(255,255,255,0.25);
+  }
+  .range-grid .tile.char {
+    background: var(--warn); border-color: var(--warn); color: #14151a;
+    box-shadow: 0 0 6px rgba(224,184,119,0.7);
+  }
+  .range-grid .tile.reachable {
+    background: var(--bg);
+    border: 2px dashed var(--good);
+    box-shadow: inset 0 0 4px rgba(111,208,140,0.35);
+  }
+
+  .panel-summary.sm { font-size: 11px; margin: 6px 0 0; }
+  .moves-manage .panel-summary-body { margin-top: 10px; }
+
+  .move-pool-list { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; margin: 8px 0; border-top: 1px solid var(--border); padding-top: 8px; }
+  .move-pool-row { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 3px 0; cursor: pointer; }
+  .move-pool-row input { cursor: pointer; }
+
+  .ability-current { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .ability-select {
+    width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 9px; color: var(--text); font-size: 13px; margin-bottom: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Player Profile</h1>
+    <div class="topbar-sub">Stats, evolution, and inventory from PokeAPI</div>
+  </div>
+</div>
+
+<div class="panel">
+  <details id="saveCodeDetails">
+    <summary class="panel-summary">Save Code</summary>
+    <div class="panel-summary-body">
+      <div class="field-grid two">
+        <div>
+          <div class="field-row">
+            <label>Your save code</label>
+            <textarea id="saveCodeOutput" rows="3" readonly placeholder="Press Generate to create a code for your current progress."></textarea>
+          </div>
+          <div class="card-actions">
+            <button class="btn small" id="generateBtn">Generate</button>
+            <button class="btn small" id="copyBtn">Copy</button>
+          </div>
+        </div>
+        <div>
+          <div class="field-row">
+            <label>Paste a save code to load</label>
+            <textarea id="saveCodeInput" rows="3" placeholder="Paste a save code here…"></textarea>
+          </div>
+          <div class="card-actions">
+            <button class="btn primary small" id="loadBtn">Load</button>
+          </div>
+        </div>
+      </div>
+      <div class="note">Save code holds your full profile. Loading overwrites the current page.</div>
+    </div>
+  </details>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Your Pokémon</h2>
+    <div id="pokemonPanelBody"></div>
+  </div>
+
+  <div>
+    <div class="panel" id="shopPanel">
+      <details id="shopDetails">
+        <summary class="panel-summary">Shop</summary>
+        <div class="panel-summary-body">
+          <div class="shop-nav" id="shopNav"></div>
+          <div id="shopBody"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel">
+      <h2>Inventory</h2>
+      <div class="inv-topbar">
+        <div class="pd-field">
+          <label>Pokédollars</label>
+          <input id="pdInput" type="number" value="0" step="100">
+        </div>
+        <div class="slot-field">
+          <label>Slots used</label>
+          <div class="slot-count" id="slotCount">0 / 10 slots</div>
+        </div>
+      </div>
+      <div class="expand-row">
+        <div class="note">5 slots per expansion, up to 4 times (30 max).</div>
+        <button class="btn small" id="expandBtn">Expand (+5 slots)</button>
+      </div>
+
+      <div class="search-row"><input id="itemSearch" placeholder="Search any item…" autocomplete="off"></div>
+      <div class="search-results" id="itemResults"></div>
+
+      <div class="inv-list" id="invList"></div>
+      <div class="inv-actions" id="invActions"></div>
+      <div class="note">Items don't stack. Consume, Give, or Discard from the selected row.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Reward</h2>
+      <div class="reward-grid" id="rewardGrid"></div>
+      <div id="rewardResult"></div>
+      <div class="note">Placeholder reward pools, edit REWARD_CATEGORIES in the code to set the real item lists later. Each click rolls one item from that category (all entries equal weight) straight into the inventory.</div>
+    </div>
+  </div>
+</div>
+
+<script src="move-ranges.js"></script>
+<script>
+const API = 'https://pokeapi.co/api/v2/';
+const POKE_CACHE = {}, ITEM_CACHE = {}, MOVE_CACHE = {};
+
+const STAT_KEYS = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const STAT_LABEL = { hp: 'HP', atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed' };
+const API_STAT_MAP = { hp: 'hp', atk: 'attack', def: 'defense', spa: 'special-attack', spd: 'special-defense', spe: 'speed' };
+
+const EXPAND_COST = 50000;
+const MAX_EXPANSIONS = 4;
+
+let idCounter = 1;
+let selectedItemUid = null;
+let draftActiveMoves = [];
+let moveManageOpen = false;
+let expandedMoveSlug = null;
+let expandedMoveLoadFailed = false;
+
+let player = {
+  pokedollars: 0,
+  expansions: 0,
+  inventory: [],
+  pokemon: null,
+  shopLevels: { general: 1, equipment: 1, dojo: 1 },
+};
+
+// Shop
+
+const SHOP_CATALOG = {
+  general: {
+    label: 'General Store',
+    tiers: {
+      1: ['oran-berry', 'cheri-berry', 'chesto-berry', 'pecha-berry', 'rawst-berry', 'aspear-berry', 'persim-berry', 'escape-rope', 'potion', 'antidote', 'paralyze-heal', 'awakening', 'burn-heal', 'ice-heal'],
+      2: ['sitrus-berry', 'lum-berry', 'occa-berry', 'passho-berry', 'wacan-berry', 'rindo-berry', 'yache-berry', 'chople-berry', 'kebia-berry', 'shuca-berry', 'coba-berry', 'payapa-berry', 'tanga-berry', 'charti-berry', 'kasib-berry', 'haban-berry', 'colbur-berry', 'babiri-berry', 'chilan-berry', 'super-potion', 'full-heal'],
+      3: ['revive', 'max-revive', 'full-restore', 'hyper-potion', 'max-potion', 'sacred-ash'],
+    },
+  },
+  equipment: {
+    label: 'Equipment Store',
+    tiers: {
+      1: ['x-attack', 'x-defense', 'x-sp-atk', 'x-sp-def', 'x-speed', 'x-accuracy', 'dire-hit', 'guard-spec'],
+      2: ['choice-band', 'choice-specs', 'choice-scarf', 'life-orb', 'focus-sash', 'muscle-band', 'wise-glasses', 'expert-belt'],
+      3: ['leftovers', 'eviolite', 'rocky-helmet', 'assault-vest', 'weakness-policy', 'kings-rock', 'scope-lens', 'quick-claw', 'mental-herb', 'safety-goggles'],
+    },
+  },
+  dojo: {
+    label: 'Dojo',
+    tiers: {
+      1: ['tm01', 'tm02', 'tm03', 'tm04', 'tm05', 'tm06', 'tm07', 'tm08', 'tm09', 'tm10'],
+      2: ['tm11', 'tm12', 'tm13', 'tm14', 'tm15', 'tm16', 'tm17', 'tm18', 'tm19', 'tm20'],
+      3: ['tm21', 'tm22', 'tm23', 'tm24', 'tm25', 'hm01', 'hm02', 'hm03', 'hm04', 'hm05'],
+    },
+  },
+};
+
+const FALLBACK_PRICES = {
+  'oran-berry': 80, 'cheri-berry': 80, 'chesto-berry': 80, 'pecha-berry': 80, 'rawst-berry': 80,
+  'aspear-berry': 80, 'persim-berry': 80, 'escape-rope': 300, 'potion': 200, 'antidote': 200,
+  'paralyze-heal': 200, 'awakening': 200, 'burn-heal': 200, 'ice-heal': 200,
+  'sitrus-berry': 80, 'lum-berry': 80, 'occa-berry': 80, 'passho-berry': 80, 'wacan-berry': 80,
+  'rindo-berry': 80, 'yache-berry': 80, 'chople-berry': 80, 'kebia-berry': 80, 'shuca-berry': 80,
+  'coba-berry': 80, 'payapa-berry': 80, 'tanga-berry': 80, 'charti-berry': 80, 'kasib-berry': 80,
+  'haban-berry': 80, 'colbur-berry': 80, 'babiri-berry': 80, 'chilan-berry': 80, 'super-potion': 700,
+  'full-heal': 400, 'revive': 2000, 'max-revive': 4000, 'full-restore': 3000, 'hyper-potion': 1500,
+  'max-potion': 2500, 'sacred-ash': 50000,
+  'x-attack': 1000, 'x-defense': 2000, 'x-sp-atk': 1000, 'x-sp-def': 2000, 'x-speed': 1000,
+  'x-accuracy': 1000, 'dire-hit': 1000, 'guard-spec': 1500,
+  'choice-band': 4000, 'choice-specs': 4000, 'choice-scarf': 4000, 'life-orb': 4000, 'focus-sash': 4000,
+  'muscle-band': 4000, 'wise-glasses': 4000, 'expert-belt': 4000,
+  'leftovers': 4000, 'eviolite': 4000, 'rocky-helmet': 4000, 'assault-vest': 1000, 'weakness-policy': 1000,
+  'kings-rock': 5000, 'scope-lens': 4000, 'quick-claw': 4000, 'mental-herb': 4000, 'safety-goggles': 4000,
+  'tm01': 40000, 'tm02': 1000, 'tm03': 50000, 'tm04': 50000, 'tm05': 50000, 'tm06': 1000, 'tm07': 1000,
+  'tm08': 50000, 'tm09': 50000, 'tm10': 1000, 'tm11': 1000, 'tm12': 50000, 'tm13': 10000, 'tm14': 1000,
+  'tm15': 1000, 'tm16': 1000, 'tm17': 10000, 'tm18': 10000, 'tm19': 10000, 'tm20': 100000, 'tm21': 1000,
+  'tm22': 1000, 'tm23': 10000, 'tm24': 1000, 'tm25': 10000,
+  'hm01': 10000, 'hm02': 10000, 'hm03': 10000, 'hm04': 10000, 'hm05': 10000,
+};
+
+let activeShop = 'general';
+let sellSelected = new Set();
+
+// ---------- Reward panel ----------
+// All placeholder pools, edit freely, every entry in a pool is equal weight.
+
+const EVOLUTION_ITEMS = [
+  'fire-stone', 'water-stone', 'thunder-stone', 'leaf-stone', 'moon-stone', 'sun-stone',
+  'shiny-stone', 'dusk-stone', 'dawn-stone', 'ice-stone', 'oval-stone', 'kings-rock',
+  'metal-coat', 'dragon-scale', 'upgrade', 'protector', 'electirizer', 'magmarizer',
+  'reaper-cloth', 'deep-sea-tooth', 'deep-sea-scale', 'prism-scale', 'razor-claw',
+  'razor-fang', 'whipped-dream', 'sachet',
+];
+
+// Placeholder guess at which numbered TMs land on lower-impact, non-staple
+// moves. The actual move each TM slug teaches is pulled live from PokeAPI
+// (getTMMoveName), not hardcoded here, so just swap the numbers once the
+// real "weak" moveset is decided.
+const WEAK_TM_ITEMS = ['tm06', 'tm12', 'tm17', 'tm18', 'tm21', 'tm32', 'tm42', 'tm44', 'tm48', 'tm55', 'tm62', 'tm90'];
+
+const ALL_TM_ITEMS = [
+  ...Array.from({ length: 92 }, (_, i) => 'tm' + String(i + 1).padStart(2, '0')),
+  ...Array.from({ length: 8 }, (_, i) => 'hm' + String(i + 1).padStart(2, '0')),
+];
+
+const MEGA_STONES = [
+  'venusaurite', 'charizardite-x', 'charizardite-y', 'blastoisinite', 'alakazite', 'gengarite',
+  'kangaskhanite', 'pinsirite', 'gyaradosite', 'aerodactylite', 'mewtwonite-x', 'mewtwonite-y',
+  'ampharosite', 'scizorite', 'heracronite', 'houndoominite', 'tyranitarite', 'sceptilite',
+  'blazikenite', 'swampertite', 'gardevoirite', 'sablenite', 'mawilite', 'aggronite', 'medichamite',
+  'manectite', 'sharpedonite', 'cameruptite', 'altarianite', 'banettite', 'absolite', 'glalitite',
+  'salamencite', 'metagrossite', 'latiasite', 'latiosite', 'lopunnite', 'garchompite', 'lucarionite',
+  'abomasite', 'galladite', 'audinite', 'diancite',
+];
+
+const MEDICINE_ITEMS = [
+  'potion', 'super-potion', 'hyper-potion', 'max-potion', 'full-restore', 'revive', 'max-revive',
+  'full-heal', 'antidote', 'paralyze-heal', 'awakening', 'burn-heal', 'ice-heal',
+  'fresh-water', 'soda-pop', 'lemonade', 'moomoo-milk', 'energy-powder', 'energy-root',
+  'heal-powder', 'revival-herb', 'elixir', 'max-elixir', 'ether', 'max-ether', 'pp-up', 'pp-max',
+];
+
+function easyBerryPool() {
+  return SHOP_CATALOG.general.tiers[1].filter(s => s.endsWith('-berry'));
+}
+function mediumBerryPool() {
+  return SHOP_CATALOG.general.tiers[2].filter(s => s.endsWith('-berry'));
+}
+function holdItemPool() {
+  return [...SHOP_CATALOG.equipment.tiers[2], ...SHOP_CATALOG.equipment.tiers[3]];
+}
+
+const CONSUMABLE_ITEMS = [
+  ...easyBerryPool(), ...mediumBerryPool(), ...MEDICINE_ITEMS,
+  'x-attack', 'x-defense', 'x-sp-atk', 'x-sp-def', 'x-speed', 'x-accuracy', 'dire-hit', 'guard-spec',
+  'hp-up', 'protein', 'iron', 'calcium', 'zinc', 'carbos',
+];
+
+const REWARD_CATEGORIES = [
+  { key: 'easy', label: 'Easy Encounter', type: 'item', pool: () => easyBerryPool() },
+  { key: 'medium', label: 'Medium Encounter', type: 'item', pool: () => ['sitrus-berry', 'revive', 'full-heal', ...EVOLUTION_ITEMS, ...WEAK_TM_ITEMS] },
+  { key: 'hard', label: 'Hard Encounter', type: 'item', pool: () => ['max-revive', 'sacred-ash', ...ALL_TM_ITEMS, ...holdItemPool()] },
+  { key: 'tmcase', label: 'TM Case', type: 'item', pool: () => ALL_TM_ITEMS },
+  { key: 'megastone', label: 'Mega Stone', type: 'item', pool: () => MEGA_STONES },
+  { key: 'moneypouch', label: 'Money Pouch', type: 'money', roll: () => Math.round((1000 + Math.random() * 9000) / 100) * 100 },
+  { key: 'medickit', label: 'Medic Kit', type: 'item', pool: () => MEDICINE_ITEMS },
+  { key: 'buried', label: 'Buried Treasure', type: 'item', pool: () => CONSUMABLE_ITEMS, allowReroll: true },
+];
+
+// Full species / item lists
+
+let ALL_SPECIES = [], speciesLoaded = false, speciesLoadFailed = false;
+let ALL_ITEMS = [], itemsLoaded = false, itemsLoadFailed = false;
+
+function prettifySlug(slug) {
+  if (!slug) return '';
+  return slug.split('-').filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+// Move range widget
+let MOVE_RANGES = {};
+let moveRangesLoaded = false;
+
+function loadMoveRanges() {
+  if (typeof window.MOVE_RANGES === 'object' && window.MOVE_RANGES) {
+    MOVE_RANGES = window.MOVE_RANGES;
+    moveRangesLoaded = true;
+  } else {
+    console.warn('move-ranges.js not found or did not define MOVE_RANGES — range visuals will be hidden. Make sure move-ranges.js sits next to this page.');
+  }
+}
+
+const RANGE_SIZE = 11;
+const RANGE_CENTER = 5;
+
+function coneOffsets(depth) {
+  const o = [];
+  for (let d = 1; d <= depth; d++) for (let c = -(d - 1); c <= d - 1; c++) o.push([-d, c]);
+  return o;
+}
+function blockOffsets(half) {
+  const o = [];
+  for (let r = -half; r <= half; r++) for (let c = -half; c <= half; c++) if (!(r === 0 && c === 0)) o.push([r, c]);
+  return o;
+}
+function plusOffsets(depth) {
+  const o = [];
+  for (let d = 1; d <= depth; d++) { o.push([-d, 0]); o.push([d, 0]); o.push([0, -d]); o.push([0, d]); }
+  return o;
+}
+function xOffsets(depth) {
+  const o = [];
+  for (let d = 1; d <= depth; d++) { o.push([-d, -d]); o.push([-d, d]); o.push([d, -d]); o.push([d, d]); }
+  return o;
+}
+
+const RANGE_PATTERNS = {
+  'short-1':      { label: 'Short (1 tile)',    offsets: [[-1, 0]] },
+  'medium-3':     { label: 'Medium (3 tiles)',  offsets: [[-3, 0]], reachable: [[-1, 0], [-2, 0]] },
+  'long-5':       { label: 'Long (5 tiles)',    offsets: [[-5, 0]], reachable: [[-1, 0], [-2, 0], [-3, 0], [-4, 0]] },
+  'line-3':       { label: '3-Tile Line',       offsets: [[-1, 0], [-2, 0], [-3, 0]] },
+  'line-5':       { label: '5-Tile Line',       offsets: [[-1, 0], [-2, 0], [-3, 0], [-4, 0], [-5, 0]] },
+  'cone-3':       { label: 'Cone 3',            offsets: coneOffsets(3) },
+  'cone-5':       { label: 'Cone 5',            offsets: coneOffsets(5) },
+  'surround-3x3': { label: 'Surrounding (3×3)', offsets: blockOffsets(1) },
+  'surround-5x5': { label: 'Surrounding (5×5)', offsets: blockOffsets(2) },
+  'plus':         { label: 'Plus (+)',          offsets: plusOffsets(3) },
+  'x':            { label: 'X',                 offsets: xOffsets(3) },
+  'room':         { label: 'Room',              offsets: blockOffsets(5) },
+};
+const RANGE_LABELS_ONLY = { self: 'Self', ally: 'Single Ally', team: 'User + Allies', field: 'Field Effect' };
+
+function buildRangeGridHtml(offsets, reachableOffsets) {
+  const hitSet = new Set(offsets.map(([r, c]) => `${r},${c}`));
+  const reachSet = new Set((reachableOffsets || []).map(([r, c]) => `${r},${c}`));
+  let tiles = '';
+  for (let r = 0; r < RANGE_SIZE; r++) {
+    for (let c = 0; c < RANGE_SIZE; c++) {
+      const dr = r - RANGE_CENTER, dc = c - RANGE_CENTER;
+      let cls = 'tile', txt = '';
+      if (dr === 0 && dc === 0) { cls += ' char'; txt = 'P'; }
+      else if (hitSet.has(`${dr},${dc}`)) cls += ' hit';
+      else if (reachSet.has(`${dr},${dc}`)) cls += ' reachable';
+      tiles += `<div class="${cls}">${txt}</div>`;
+    }
+  }
+  return `<div class="range-grid">${tiles}</div>`;
+}
+
+function renderRangeWidget(slug) {
+  if (!moveRangesLoaded) return '';
+  const category = MOVE_RANGES[slug];
+  if (!category) return '';
+  if (RANGE_PATTERNS[category]) {
+    const p = RANGE_PATTERNS[category];
+    return `<div class="range-widget"><div class="range-widget-label">${p.label}</div>${buildRangeGridHtml(p.offsets, p.reachable)}</div>`;
+  }
+  if (RANGE_LABELS_ONLY[category]) {
+    return `<div class="range-widget range-widget-label-only"><div class="range-widget-label">${RANGE_LABELS_ONLY[category]}</div></div>`;
+  }
+  return '';
+}
+
+function formatItemName(slug) {
+  const m = slug.match(/^(tm|hm)(\d+)$/i);
+  if (m) return m[1].toUpperCase() + parseInt(m[2], 10);
+  return prettifySlug(slug);
+}
+
+const TM_MOVE_CACHE = {};
+
+async function getTMMoveName(slug) {
+  if (TM_MOVE_CACHE.hasOwnProperty(slug)) return TM_MOVE_CACHE[slug];
+  let result = null;
+  try {
+    const data = await fetchItem(slug);
+    if (data.machines && data.machines.length) {
+      const entry = data.machines.find(m => m.version_group.name === 'scarlet-violet') || data.machines[data.machines.length - 1];
+      const res = await fetch(entry.machine.url);
+      if (res.ok) {
+        const mData = await res.json();
+        result = mData.move.name;
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  TM_MOVE_CACHE[slug] = result;
+  return result;
+}
+
+async function loadAllSpecies() {
+  speciesLoadFailed = false;
+  try {
+    const res = await fetch(API + 'pokemon?limit=100000');
+    if (!res.ok) throw new Error('PokeAPI species list request failed (' + res.status + ')');
+    const data = await res.json();
+    ALL_SPECIES = data.results.map(r => ({ slug: r.name, display: prettifySlug(r.name) }));
+    speciesLoaded = true;
+  } catch (err) {
+    speciesLoadFailed = true;
+    console.error(err);
+  }
+}
+
+async function loadAllItems() {
+  itemsLoadFailed = false;
+  try {
+    const firstRes = await fetch(API + 'item?limit=1');
+    if (!firstRes.ok) throw new Error('PokeAPI item list request failed (' + firstRes.status + ')');
+    const firstData = await firstRes.json();
+    const total = firstData.count;
+
+    const pageSize = 500;
+    const pageCount = Math.ceil(total / pageSize);
+    const pages = await Promise.all(
+      Array.from({ length: pageCount }, (_, i) =>
+        fetch(API + `item?limit=${pageSize}&offset=${i * pageSize}`).then(r => {
+          if (!r.ok) throw new Error('PokeAPI item list page request failed (' + r.status + ')');
+          return r.json();
+        })
+      )
+    );
+
+    ALL_ITEMS = pages.flatMap(p => p.results).map(r => ({ slug: r.name, display: formatItemName(r.name) }));
+    itemsLoaded = true;
+  } catch (err) {
+    itemsLoadFailed = true;
+    console.error('Item list failed to load:', err);
+  }
+}
+
+let ALL_MOVES = [], movesLoaded = false, movesLoadFailed = false;
+
+async function loadAllMoves() {
+  movesLoadFailed = false;
+  try {
+    const firstRes = await fetch(API + 'move?limit=1');
+    if (!firstRes.ok) throw new Error('PokeAPI move list request failed (' + firstRes.status + ')');
+    const firstData = await firstRes.json();
+    const total = firstData.count;
+
+    const pageSize = 500;
+    const pageCount = Math.ceil(total / pageSize);
+    const pages = await Promise.all(
+      Array.from({ length: pageCount }, (_, i) =>
+        fetch(API + `move?limit=${pageSize}&offset=${i * pageSize}`).then(r => {
+          if (!r.ok) throw new Error('PokeAPI move list page request failed (' + r.status + ')');
+          return r.json();
+        })
+      )
+    );
+
+    ALL_MOVES = pages.flatMap(p => p.results).map(r => ({ slug: r.name, display: prettifySlug(r.name) }));
+    movesLoaded = true;
+  } catch (err) {
+    movesLoadFailed = true;
+    console.error('Move list failed to load:', err);
+  }
+}
+
+function moveSearchResultsHtml(q) {
+  if (movesLoadFailed) return '<span class="empty-note">Could not load the move list from PokeAPI (see the browser console for details). <a href="#" onclick="onRetryMoves(event)">Retry</a></span>';
+  if (!movesLoaded) return '<span class="empty-note">Loading the full move list from PokeAPI…</span>';
+  const matches = ALL_MOVES.filter(m => m.display.toLowerCase().includes(q)).slice(0, 20);
+  return matches.map(m => `<button class="btn small" onclick="onLearnMove('${m.slug}')">+ ${m.display}</button>`).join('')
+    || '<span class="empty-note">No match.</span>';
+}
+
+function speciesSearch(q, addFn) {
+  if (speciesLoadFailed) return '<span class="empty-note">Could not load the species list from PokeAPI. Check your connection and reload.</span>';
+  if (!speciesLoaded) return '<span class="empty-note">Loading the full species list from PokeAPI…</span>';
+  const matches = ALL_SPECIES.filter(s => s.display.toLowerCase().includes(q)).slice(0, 20);
+  return matches.map(s => `<button class="btn small" onclick="${addFn}('${s.slug}')">+ ${s.display}</button>`).join('')
+    || '<span class="empty-note">No match.</span>';
+}
+
+function itemSearchResults(q) {
+  if (itemsLoadFailed) return '<span class="empty-note">Could not load the item list from PokeAPI (see the browser console for details). <a href="#" onclick="onRetryItems(event)">Retry</a></span>';
+  if (!itemsLoaded) return '<span class="empty-note">Loading the full item list from PokeAPI…</span>';
+  const matches = ALL_ITEMS.filter(i => i.display.toLowerCase().includes(q)).slice(0, 20);
+  if (!matches.length) return '<span class="empty-note">No match.</span>';
+  matches.forEach(i => enrichItemButtonWithMoveName(i.slug));
+  return matches.map(i => `<button class="btn small" data-item-slug="${i.slug}" onclick="onAddItem('${i.slug}')">+ ${i.display}</button>`).join('');
+}
+
+async function enrichItemButtonWithMoveName(slug) {
+  const moveName = await getTMMoveName(slug);
+  if (!moveName) return;
+  document.querySelectorAll(`#itemResults button[data-item-slug="${slug}"]`).forEach(btn => {
+    btn.textContent = `+ ${formatItemName(slug)} (${prettifySlug(moveName)})`;
+  });
+}
+
+// PokeAPI fetch helpers
+
+async function fetchPokemon(slug) {
+  if (POKE_CACHE[slug]) return POKE_CACHE[slug];
+  const res = await fetch(API + 'pokemon/' + slug);
+  if (!res.ok) throw new Error('Could not fetch ' + slug + ' from PokeAPI');
+  const data = await res.json();
+  POKE_CACHE[slug] = data;
+  return data;
+}
+
+async function fetchItem(slug) {
+  if (ITEM_CACHE[slug]) return ITEM_CACHE[slug];
+  const res = await fetch(API + 'item/' + slug);
+  if (!res.ok) throw new Error('Could not fetch item ' + slug);
+  const data = await res.json();
+  ITEM_CACHE[slug] = data;
+  return data;
+}
+
+async function fetchMove(slug) {
+  if (MOVE_CACHE[slug]) return MOVE_CACHE[slug];
+  const res = await fetch(API + 'move/' + slug);
+  if (!res.ok) throw new Error('Could not fetch move ' + slug);
+  const data = await res.json();
+  const parsed = {
+    slug,
+    name: data.name.replace(/-/g, ' '),
+    power: data.power,
+    accuracy: data.accuracy,
+    pp: data.pp,
+    type: data.type.name,
+    damageClass: data.damage_class.name,
+    description: extractMoveDescription(data),
+  };
+  MOVE_CACHE[slug] = parsed;
+  return parsed;
+}
+
+function extractMoveDescription(data) {
+  const effectEntry = (data.effect_entries || []).find(e => e.language.name === 'en');
+  if (effectEntry) {
+    const text = (effectEntry.short_effect || effectEntry.effect || '').replace(/\$effect_chance/g, data.effect_chance != null ? data.effect_chance : '');
+    if (text) return text.replace(/\s+/g, ' ').trim();
+  }
+  const flavorEntries = (data.flavor_text_entries || []).filter(e => e.language.name === 'en');
+  if (flavorEntries.length) {
+    const latest = flavorEntries[flavorEntries.length - 1];
+    return latest.flavor_text.replace(/[\n\f\r]+/g, ' ').trim();
+  }
+  return '';
+}
+
+function extractItemDescription(data) {
+  const effectEntry = (data.effect_entries || []).find(e => e.language.name === 'en');
+  if (effectEntry) {
+    const text = (effectEntry.short_effect || effectEntry.effect || '').replace(/\$effect_chance/g, data.effect_chance != null ? data.effect_chance : '');
+    if (text) return text.replace(/\s+/g, ' ').trim();
+  }
+  const flavorEntries = (data.flavor_text_entries || []).filter(e => e.language.name === 'en');
+  if (flavorEntries.length) {
+    const latest = flavorEntries[flavorEntries.length - 1];
+    return (latest.text || latest.flavor_text || '').replace(/[\n\f\r]+/g, ' ').trim();
+  }
+  return '';
+}
+
+function extractItemPrice(data) {
+  const prices = data.prices || [];
+  let entry = prices.find(p => p.version_group.name === 'scarlet-violet' && p.purchase_price != null);
+  if (!entry) entry = [...prices].reverse().find(p => p.purchase_price != null);
+  const buy = entry ? entry.purchase_price : (FALLBACK_PRICES[data.name] != null ? FALLBACK_PRICES[data.name] : (data.cost || 0));
+  let sell = entry ? entry.sell_price : null;
+  if (sell == null) sell = Math.floor(buy / 2);
+  return { buy, sell };
+}
+
+function houseRulePower(power) {
+  if (power == null) return null;
+  return Math.round(power / 2);
+}
+function houseRulePP(pp) {
+  if (pp == null) return null;
+  return Math.max(1, Math.round(pp / 5));
+}
+function houseRuleHitThreshold(accuracy) {
+  if (accuracy == null) return null;
+  return 10 + Math.round((100 - accuracy) / 10);
+}
+
+function baseStatsFrom(pokeData) {
+  const base = {};
+  pokeData.stats.forEach(s => {
+    const key = Object.keys(API_STAT_MAP).find(k => API_STAT_MAP[k] === s.stat.name);
+    if (key) base[key] = s.base_stat;
+  });
+  return base;
+}
+
+async function buildMonFrom(pokeData, overrides) {
+  const speciesRes = await fetch(API + 'pokemon-species/' + pokeData.species.name);
+  if (!speciesRes.ok) throw new Error('Could not fetch species data for ' + pokeData.species.name);
+  const speciesData = await speciesRes.json();
+  const chainRes = await fetch(speciesData.evolution_chain.url);
+  if (!chainRes.ok) throw new Error('Could not fetch evolution chain');
+  const chainData = await chainRes.json();
+
+  const artwork = (pokeData.sprites && pokeData.sprites.other && pokeData.sprites.other['official-artwork']
+    && pokeData.sprites.other['official-artwork'].front_default) || (pokeData.sprites && pokeData.sprites.front_default);
+
+  const abilityOptions = buildAbilityOptions(pokeData);
+
+  const mon = {
+    speciesSlug: pokeData.species.name,
+    formSlug: pokeData.name,
+    displayName: prettifySlug(pokeData.name),
+    types: pokeData.types.map(t => t.type.name),
+    sprite: pokeData.sprites && pokeData.sprites.front_default,
+    artwork,
+    baseStats: baseStatsFrom(pokeData),
+    level: 1,
+    investedPoints: { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+    evolutionChain: chainData,
+    heldItem: null,
+    abilityOptions,
+    currentAbility: pickDefaultAbility(abilityOptions),
+    movePool: buildMovePool(pokeData),
+    learnedExtra: [],
+    activeMoves: [],
+  };
+  return Object.assign(mon, overrides || {});
+}
+
+// Stat conversion
+
+function convertStat(base, key) {
+  const rounded = Math.round(base / 5);
+  return key === 'hp' ? rounded * 2 : rounded;
+}
+
+function pointsSpent(mon) {
+  return STAT_KEYS.reduce((sum, k) => sum + mon.investedPoints[k], 0);
+}
+
+function pointsAvailable(mon) {
+  return (mon.level - 1) * 5 - pointsSpent(mon);
+}
+
+function effectiveStat(mon, key) {
+  const lvl1 = convertStat(mon.baseStats[key], key);
+  const bonus = key === 'hp' ? mon.investedPoints[key] * 2 : mon.investedPoints[key];
+  return lvl1 + bonus;
+}
+
+// Moves & Abilities
+
+const VERSION_GROUP_ORDER = [
+  'red-blue', 'yellow', 'gold-silver', 'crystal', 'ruby-sapphire', 'emerald',
+  'firered-leafgreen', 'diamond-pearl', 'platinum', 'heartgold-soulsilver',
+  'black-white', 'black-2-white-2', 'x-y', 'omega-ruby-alpha-sapphire',
+  'sun-moon', 'ultra-sun-ultra-moon', 'lets-go-pikachu-lets-go-eevee',
+  'sword-shield', 'brilliant-diamond-and-shining-pearl', 'legends-arceus', 'scarlet-violet',
+];
+
+function pickCanonicalVersionGroup(pokeData) {
+  const present = new Set();
+  pokeData.moves.forEach(m => m.version_group_details.forEach(d => present.add(d.version_group.name)));
+  for (let i = VERSION_GROUP_ORDER.length - 1; i >= 0; i--) {
+    if (present.has(VERSION_GROUP_ORDER[i])) return VERSION_GROUP_ORDER[i];
+  }
+  return present.size ? present.values().next().value : null;
+}
+
+function buildMovePool(pokeData) {
+  const versionGroup = pickCanonicalVersionGroup(pokeData);
+  const levelUp = [], machine = new Set(), tutor = new Set(), egg = new Set();
+  pokeData.moves.forEach(m => {
+    const detail = m.version_group_details.find(d => d.version_group.name === versionGroup);
+    if (!detail) return;
+    const method = detail.move_learn_method.name;
+    if (method === 'level-up') levelUp.push({ name: m.move.name, level: detail.level_learned_at || 0 });
+    else if (method === 'machine') machine.add(m.move.name);
+    else if (method === 'tutor') tutor.add(m.move.name);
+    else if (method === 'egg') egg.add(m.move.name);
+  });
+  levelUp.sort((a, b) => a.level - b.level);
+  return { versionGroup, levelUp, machine, tutor, egg };
+}
+
+function getUnlockedMovePool(mon) {
+  const mainlineLevel = mon.level * 5;
+  const fromLevel = mon.movePool.levelUp.filter(m => m.level <= mainlineLevel).map(m => m.name);
+  const combined = Array.from(new Set([...fromLevel, ...mon.learnedExtra]));
+  return combined
+    .map(slug => ({ slug, display: prettifySlug(slug) }))
+    .sort((a, b) => a.display.localeCompare(b.display));
+}
+
+function buildAbilityOptions(pokeData) {
+  return pokeData.abilities
+    .slice()
+    .sort((a, b) => a.slot - b.slot)
+    .map(a => ({ slug: a.ability.name, display: prettifySlug(a.ability.name), isHidden: a.is_hidden }));
+}
+
+function pickDefaultAbility(abilityOptions) {
+  const nonHidden = abilityOptions.find(a => !a.isHidden);
+  return (nonHidden || abilityOptions[0] || {}).slug || null;
+}
+
+// Evolution
+
+function findChainNode(node, speciesName) {
+  if (node.species.name === speciesName) return node;
+  for (const child of node.evolves_to) {
+    const found = findChainNode(child, speciesName);
+    if (found) return found;
+  }
+  return null;
+}
+
+function getEvolutionOptions(mon) {
+  if (!mon.evolutionChain) return [];
+  const node = findChainNode(mon.evolutionChain.chain, mon.speciesSlug);
+  if (!node || !node.evolves_to || !node.evolves_to.length) return [];
+  const mainlineLevel = mon.level * 5;
+
+  return node.evolves_to.map(next => {
+    const details = next.evolution_details || [];
+    let auto = false, consumesItem = false;
+    details.forEach(d => {
+      const trig = d.trigger ? d.trigger.name : '';
+      if (trig === 'level-up' && d.min_happiness) auto = true;
+      else if (trig === 'level-up' && d.min_level && mainlineLevel >= d.min_level) auto = true;
+      else if (trig === 'use-item' && d.item && mon.heldItem && mon.heldItem.slug === d.item.name) {
+        auto = true;
+        consumesItem = true;
+      }
+    });
+    const hasNonAutoPath = details.length === 0 || details.some(d => {
+      const trig = d.trigger ? d.trigger.name : '';
+      return trig !== 'level-up' && trig !== 'use-item';
+    });
+
+    return {
+      speciesName: next.species.name,
+      displayName: prettifySlug(next.species.name),
+      auto,
+      consumesItem,
+      manualOverride: !auto && hasNonAutoPath,
+    };
+  });
+}
+
+async function evolveTo(targetSlug, consumesItem) {
+  const mon = player.pokemon;
+  const data = await fetchPokemon(targetSlug);
+  const artwork = (data.sprites && data.sprites.other && data.sprites.other['official-artwork']
+    && data.sprites.other['official-artwork'].front_default) || (data.sprites && data.sprites.front_default);
+
+  mon.speciesSlug = data.species.name;
+  mon.formSlug = data.name;
+  mon.displayName = prettifySlug(data.name);
+  mon.types = data.types.map(t => t.type.name);
+  mon.sprite = data.sprites && data.sprites.front_default;
+  mon.artwork = artwork;
+  mon.baseStats = baseStatsFrom(data);
+  if (consumesItem) mon.heldItem = null;
+
+  mon.abilityOptions = buildAbilityOptions(data);
+  if (!mon.abilityOptions.some(a => a.slug === mon.currentAbility)) {
+    mon.currentAbility = pickDefaultAbility(mon.abilityOptions);
+  }
+  mon.movePool = buildMovePool(data);
+}
+
+// Rendering: shared
+
+function typeBadges(types) {
+  return types.map(t => `<span class="type-badge">${t}</span>`).join('');
+}
+
+function renderApp() {
+  renderPokemonPanel();
+  renderInventoryPanel();
+  renderShopPanel();
+  renderRewardPanel();
+}
+
+// Rendering: Pokémon panel
+
+function renderPokemonPanel() {
+  const container = document.getElementById('pokemonPanelBody');
+  const mon = player.pokemon;
+
+  if (!mon) {
+    container.innerHTML = `
+      <div class="search-row"><input id="starterSearch" placeholder="Search any Pokémon…" autocomplete="off"></div>
+      <div class="search-results" id="starterResults"></div>
+      <div class="note">Starts at Level 1, stats converted the same way as the DM Combat Tool.</div>
+    `;
+    document.getElementById('starterSearch').addEventListener('input', onSearchStarter);
+    return;
+  }
+
+  const mainlineLevel = mon.level * 5;
+  const avail = pointsAvailable(mon);
+  const evoOptions = getEvolutionOptions(mon);
+
+  container.innerHTML = `
+    <div class="hero">
+      ${mon.artwork ? `<img src="${mon.artwork}" class="hero-img">` : ''}
+      <div class="hero-name">${mon.displayName}</div>
+      <div class="card-types">${typeBadges(mon.types)}</div>
+    </div>
+
+    <div class="level-row">
+      <button class="btn small" onclick="onLevelChange(-1)" ${mon.level <= 1 ? 'disabled' : ''}>−</button>
+      <div class="level-badge">Level ${mon.level}<span class="level-mainline">Mainline equivalent: Lv. ${mainlineLevel}</span></div>
+      <button class="btn small primary" onclick="onLevelChange(1)">Level Up</button>
+    </div>
+    <div class="points-pool ${avail > 0 ? 'has-points' : ''}">${avail} point${avail === 1 ? '' : 's'} to spend</div>
+
+    <div class="alloc-list">
+      ${STAT_KEYS.map(k => allocRow(mon, k)).join('')}
+    </div>
+
+    <div class="moves-section">
+      <div class="poke-section-label">Active Moves (${mon.activeMoves.length}/6)</div>
+      <div class="move-chip-row">
+        ${mon.activeMoves.length
+          ? mon.activeMoves.map(m => `<span class="tag move-tag${expandedMoveSlug === m ? ' active' : ''}" onclick="onToggleMoveInfo('${m}')">${prettifySlug(m)}</span>`).join('')
+          : '<div class="empty-note">No moves equipped yet, manage moves below.</div>'}
+      </div>
+      <div id="moveInfoBox">${renderMoveInfoBox()}</div>
+      <details class="moves-manage" ${moveManageOpen ? 'open' : ''} ontoggle="moveManageOpen = this.open">
+        <summary class="panel-summary sm">Manage Moves</summary>
+        <div class="panel-summary-body">
+          <div class="note">Pick up to 6 active moves, then press Confirm.</div>
+          <div class="move-pool-list" id="movePoolList">${renderMovePoolCheckboxes(mon)}</div>
+          <div class="card-actions">
+            <button class="btn small primary" onclick="onConfirmActiveMoves()">Confirm Active Moves</button>
+          </div>
+          <div class="field-row" style="margin-top:14px">
+            <label>Learn a tutor or egg move (manual)</label>
+            <input id="moveLearnSearch" placeholder="Search any move…" autocomplete="off">
+          </div>
+          <div class="search-results" id="moveLearnResults"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="ability-section">
+      <div class="poke-section-label">Ability</div>
+      <div class="ability-current">${prettifySlug(mon.currentAbility)}${(mon.abilityOptions.find(a => a.slug === mon.currentAbility) || {}).isHidden ? ' (Hidden)' : ''}</div>
+      ${mon.abilityOptions.length > 1 ? `
+        <select class="ability-select" onchange="onSwapAbility(this.value)">
+          ${mon.abilityOptions.map(a => `<option value="${a.slug}" ${a.slug === mon.currentAbility ? 'selected' : ''}>${a.display}${a.isHidden ? ' (Hidden)' : ''}</option>`).join('')}
+        </select>
+        <div class="note">Represents an Ability Patch or Capsule. DM's call.</div>
+      ` : '<div class="empty-note">Only one ability is available for this species.</div>'}
+    </div>
+
+    <div class="held-item-row">
+      <div class="poke-section-label">Held Item</div>
+      ${mon.heldItem
+        ? `<span class="tag" onclick="onRemoveHeldItem()">${mon.heldItem.sprite ? `<img src="${mon.heldItem.sprite}" class="tag-img">` : ''}${mon.heldItem.display} · click to remove</span>`
+        : '<div class="empty-note">Not holding anything. Select an item in your inventory and press Give.</div>'}
+    </div>
+
+    <div class="evo-section">
+      <div class="poke-section-label">Evolution</div>
+      ${evoOptions.length ? evoOptions.map(evoCard).join('') : '<div class="empty-note">Fully evolved, no further evolutions.</div>'}
+    </div>
+
+    <div class="card-actions" style="margin-top:16px">
+      <button class="btn danger small" onclick="onReleasePokemon()">Start Over</button>
+    </div>
+  `;
+
+  document.getElementById('moveLearnSearch').addEventListener('input', onSearchMoveLearn);
+}
+
+function allocRow(mon, key) {
+  const lvl1 = convertStat(mon.baseStats[key], key);
+  const bonus = key === 'hp' ? mon.investedPoints[key] * 2 : mon.investedPoints[key];
+  const total = lvl1 + bonus;
+  return `
+    <div class="alloc-row">
+      <div class="alloc-label">${STAT_LABEL[key]}</div>
+      <div class="alloc-base">${lvl1}${bonus ? ` + ${bonus}` : ''}</div>
+      <div class="alloc-controls">
+        <button class="btn small" onclick="onAllocPoint('${key}',-1)" ${mon.investedPoints[key] <= 0 ? 'disabled' : ''}>−</button>
+        <button class="btn small" onclick="onAllocPoint('${key}',1)" ${pointsAvailable(mon) <= 0 ? 'disabled' : ''}>+</button>
+      </div>
+      <div class="alloc-total"><b>${total}</b></div>
+    </div>`;
+}
+
+function evoCard(opt) {
+  let btn = '';
+  if (opt.auto) btn = `<button class="btn primary small" onclick="onEvolve('${opt.speciesName}', ${opt.consumesItem})">Evolve</button>`;
+  else if (opt.manualOverride) btn = `<button class="btn small" onclick="onEvolve('${opt.speciesName}', false)">Force Evolve</button>`;
+  return `
+    <div class="evo-path ${opt.auto ? 'ready' : ''}">
+      <div class="evo-path-top">
+        <span class="evo-name">${opt.displayName}</span>
+        ${btn}
+      </div>
+    </div>`;
+}
+
+function renderMoveInfoBox() {
+  if (!expandedMoveSlug) return '';
+  const detail = MOVE_CACHE[expandedMoveSlug];
+  if (!detail) {
+    return expandedMoveLoadFailed
+      ? `<div class="move-info-box"><span class="empty-note">Couldn't load that move. <a href="#" onclick="onRetryMoveInfo(event)">Retry</a></span></div>`
+      : `<div class="move-info-box"><span class="empty-note">Loading move info…</span></div>`;
+  }
+
+  const power = houseRulePower(detail.power);
+  const pp = houseRulePP(detail.pp);
+  const threshold = houseRuleHitThreshold(detail.accuracy);
+
+  return `
+    <div class="move-info-box">
+      <div class="move-info-top">
+        <b>${prettifySlug(detail.slug)}</b>
+        <span class="type-badge">${detail.type}</span>
+      </div>
+      <div class="move-info-grid">
+        <div><span class="k">Class</span><span class="v">${detail.damageClass}</span></div>
+        <div><span class="k">Power</span><span class="v">${power != null ? power : '-'}</span></div>
+        <div><span class="k">Hit on d20</span><span class="v">${threshold != null ? threshold + '+' : 'auto-hit'}</span></div>
+        <div><span class="k">PP</span><span class="v">${pp != null ? pp : '-'}</span></div>
+      </div>
+      ${renderRangeWidget(detail.slug)}
+      ${detail.description ? `<div class="note">${detail.description}</div>` : ''}
+    </div>`;
+}
+
+async function onToggleMoveInfo(slug) {
+  if (expandedMoveSlug === slug) {
+    expandedMoveSlug = null;
+    renderPokemonPanel();
+    return;
+  }
+  expandedMoveSlug = slug;
+  expandedMoveLoadFailed = false;
+  renderPokemonPanel();
+  if (!MOVE_CACHE[slug]) {
+    try {
+      await fetchMove(slug);
+    } catch (err) {
+      expandedMoveLoadFailed = true;
+    }
+  }
+  if (expandedMoveSlug === slug) renderPokemonPanel();
+}
+
+async function onRetryMoveInfo(e) {
+  e.preventDefault();
+  if (!expandedMoveSlug) return;
+  expandedMoveLoadFailed = false;
+  const slug = expandedMoveSlug;
+  renderPokemonPanel();
+  try {
+    await fetchMove(slug);
+  } catch (err) {
+    expandedMoveLoadFailed = true;
+  }
+  if (expandedMoveSlug === slug) renderPokemonPanel();
+}
+
+function renderMovePoolCheckboxes(mon) {
+  const pool = getUnlockedMovePool(mon);
+  if (!pool.length) return '<div class="empty-note">No moves unlocked yet.</div>';
+  return pool.map(m => `
+    <label class="move-pool-row">
+      <input type="checkbox" ${draftActiveMoves.includes(m.slug) ? 'checked' : ''} onchange="onToggleMoveSelect('${m.slug}', this.checked)">
+      <span>${m.display}</span>
+    </label>`).join('');
+}
+
+function updateMovePoolList() {
+  const container = document.getElementById('movePoolList');
+  if (!container || !player.pokemon) return;
+  container.innerHTML = renderMovePoolCheckboxes(player.pokemon);
+}
+
+// Rendering: Inventory panel
+
+function maxSlots() {
+  return 10 + player.expansions * 5;
+}
+
+function renderInventoryPanel() {
+  document.getElementById('pdInput').value = player.pokedollars;
+  document.getElementById('slotCount').textContent = `${player.inventory.length} / ${maxSlots()} slots`;
+
+  const expandBtn = document.getElementById('expandBtn');
+  if (player.expansions >= MAX_EXPANSIONS) {
+    expandBtn.disabled = true;
+    expandBtn.textContent = 'Fully Expanded';
+  } else {
+    expandBtn.disabled = player.pokedollars < EXPAND_COST;
+    expandBtn.textContent = `Expand (+5 slots), ${EXPAND_COST.toLocaleString()}₽`;
+  }
+
+  const list = document.getElementById('invList');
+  list.innerHTML = player.inventory.length
+    ? player.inventory.map(i => `
+      <div class="inv-item ${selectedItemUid === i.uid ? 'selected' : ''}" onclick="onSelectItem(${i.uid})">
+        ${i.sprite ? `<img src="${i.sprite}">` : ''}
+        <div class="inv-item-text">
+          <span class="inv-item-name">${i.display}${i.tmMove ? ` (${prettifySlug(i.tmMove)})` : ''}</span>
+          <div class="inv-item-desc" data-uid="${i.uid}">${i.description || ''}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-note">No items yet, search below to add one.</div>';
+
+  const actions = document.getElementById('invActions');
+  actions.innerHTML = selectedItemUid ? `
+    <button class="btn small" onclick="onConsumeItem()">Consume</button>
+    <button class="btn small primary" onclick="onGiveItem()">Give</button>
+    <button class="btn small danger" onclick="onDiscardItem()">Discard</button>
+  ` : '';
+
+  enrichInventoryDescriptions();
+}
+
+async function enrichInventoryDescriptions() {
+  for (const item of player.inventory) {
+    if (item.description) continue;
+    try {
+      const data = await fetchItem(item.slug);
+      item.description = extractItemDescription(data);
+      const el = document.querySelector(`.inv-item-desc[data-uid="${item.uid}"]`);
+      if (el) el.textContent = item.description;
+    } catch (err) {}
+  }
+}
+
+// Event handlers: Pokémon
+
+function onSearchStarter(e) {
+  const q = e.target.value.trim().toLowerCase();
+  const results = document.getElementById('starterResults');
+  if (!q) { results.innerHTML = ''; return; }
+  results.innerHTML = speciesSearch(q, 'onPickStarter');
+}
+
+async function onPickStarter(slug) {
+  try {
+    const data = await fetchPokemon(slug);
+    player.pokemon = await buildMonFrom(data);
+    draftActiveMoves = [];
+    renderPokemonPanel();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function onToggleMoveSelect(slug, checked) {
+  if (checked) {
+    if (draftActiveMoves.length < 6 && !draftActiveMoves.includes(slug)) draftActiveMoves.push(slug);
+  } else {
+    draftActiveMoves = draftActiveMoves.filter(m => m !== slug);
+  }
+  updateMovePoolList();
+}
+
+function onConfirmActiveMoves() {
+  const mon = player.pokemon;
+  if (!mon) return;
+  mon.activeMoves = draftActiveMoves.slice();
+  if (expandedMoveSlug && !mon.activeMoves.includes(expandedMoveSlug)) expandedMoveSlug = null;
+  renderPokemonPanel();
+}
+
+function onSwapAbility(slug) {
+  const mon = player.pokemon;
+  if (!mon) return;
+  mon.currentAbility = slug;
+  renderPokemonPanel();
+}
+
+function onSearchMoveLearn(e) {
+  const q = e.target.value.trim().toLowerCase();
+  const results = document.getElementById('moveLearnResults');
+  if (!q) { results.innerHTML = ''; return; }
+  results.innerHTML = moveSearchResultsHtml(q);
+}
+
+async function onRetryMoves(e) {
+  e.preventDefault();
+  const results = document.getElementById('moveLearnResults');
+  results.innerHTML = '<span class="empty-note">Retrying…</span>';
+  await loadAllMoves();
+  const input = document.getElementById('moveLearnSearch');
+  if (input && input.value.trim()) {
+    results.innerHTML = moveSearchResultsHtml(input.value.trim().toLowerCase());
+  } else {
+    results.innerHTML = '';
+  }
+}
+
+function onLearnMove(slug) {
+  const mon = player.pokemon;
+  if (!mon) return;
+  if (!mon.learnedExtra.includes(slug)) mon.learnedExtra.push(slug);
+  const results = document.getElementById('moveLearnResults');
+  if (results) results.innerHTML = `<span class="empty-note">${prettifySlug(slug)} added to the unlocked pool below.</span>`;
+  updateMovePoolList();
+}
+
+function onLevelChange(delta) {
+  const mon = player.pokemon;
+  if (!mon) return;
+  const newLevel = mon.level + delta;
+  if (newLevel < 1) return;
+  if (delta < 0) {
+    const newTotalPoints = (newLevel - 1) * 5;
+    if (pointsSpent(mon) > newTotalPoints) {
+      alert('Refund some stat points before lowering the level. More points are spent than this level would allow.');
+      return;
+    }
+  }
+  mon.level = newLevel;
+  renderPokemonPanel();
+}
+
+function onAllocPoint(key, delta) {
+  const mon = player.pokemon;
+  if (!mon) return;
+  if (delta > 0) {
+    if (pointsAvailable(mon) <= 0) return;
+    mon.investedPoints[key] += 1;
+  } else {
+    if (mon.investedPoints[key] <= 0) return;
+    mon.investedPoints[key] -= 1;
+  }
+  renderPokemonPanel();
+}
+
+async function onEvolve(targetSlug, consumesItem) {
+  if (!confirm(`Evolve into ${prettifySlug(targetSlug)}? Level, invested stat points, and learned moves carry over.`)) return;
+  try {
+    await evolveTo(targetSlug, consumesItem);
+    draftActiveMoves = player.pokemon.activeMoves.slice();
+    renderPokemonPanel();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function onRemoveHeldItem() {
+  const mon = player.pokemon;
+  if (!mon || !mon.heldItem) return;
+  if (player.inventory.length >= maxSlots()) {
+    alert('No room in inventory to return this item. Free a slot first.');
+    return;
+  }
+  player.inventory.push({ uid: idCounter++, slug: mon.heldItem.slug, display: mon.heldItem.display, sprite: mon.heldItem.sprite });
+  mon.heldItem = null;
+  renderApp();
+}
+
+function onReleasePokemon() {
+  if (!confirm('Start over with a different Pokémon? This clears your current level, stats, moves, and held item. Your inventory and Pokédollars stay.')) return;
+  player.pokemon = null;
+  draftActiveMoves = [];
+  expandedMoveSlug = null;
+  renderPokemonPanel();
+}
+
+// Event handlers: Inventory
+
+function onSearchItem(e) {
+  const q = e.target.value.trim().toLowerCase();
+  const results = document.getElementById('itemResults');
+  if (!q) { results.innerHTML = ''; return; }
+  results.innerHTML = itemSearchResults(q);
+}
+
+async function onRetryItems(e) {
+  e.preventDefault();
+  const results = document.getElementById('itemResults');
+  results.innerHTML = '<span class="empty-note">Retrying…</span>';
+  await loadAllItems();
+  const input = document.getElementById('itemSearch');
+  if (input && input.value.trim()) {
+    results.innerHTML = itemSearchResults(input.value.trim().toLowerCase());
+  } else {
+    results.innerHTML = '';
+  }
+}
+
+async function onAddItem(slug) {
+  if (player.inventory.length >= maxSlots()) {
+    alert('Inventory is full. Expand it or free up a slot first.');
+    return;
+  }
+  try {
+    const data = await fetchItem(slug);
+    const tmMove = await getTMMoveName(slug);
+    player.inventory.push({
+      uid: idCounter++,
+      slug: data.name,
+      display: formatItemName(data.name),
+      sprite: data.sprites && data.sprites.default,
+      tmMove,
+      description: extractItemDescription(data),
+    });
+    renderInventoryPanel();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// ---------- Rendering & events: Reward panel ----------
+
+function renderRewardPanel() {
+  const grid = document.getElementById('rewardGrid');
+  if (!grid) return;
+  grid.innerHTML = REWARD_CATEGORIES.map(c => `<button class="btn reward-btn" onclick="onClaimReward('${c.key}')">${c.label}</button>`).join('');
+}
+
+function showRewardResult(message, rerollCtx) {
+  const box = document.getElementById('rewardResult');
+  if (!box) return;
+  box.innerHTML = `
+    <div class="reward-result">
+      <span>${message}</span>
+      ${rerollCtx ? `<button class="btn small" onclick="onRerollReward(${rerollCtx.uid}, '${rerollCtx.key}')">Reroll</button>` : ''}
+    </div>`;
+}
+
+async function onClaimReward(key) {
+  const cat = REWARD_CATEGORIES.find(c => c.key === key);
+  if (!cat) return;
+
+  if (cat.type === 'money') {
+    const amount = cat.roll();
+    player.pokedollars += amount;
+    renderInventoryPanel();
+    showRewardResult(`+${amount} Pokédollars added.`, null);
+    return;
+  }
+
+  if (player.inventory.length >= maxSlots()) {
+    alert('Inventory is full. Expand it or free up a slot first.');
+    return;
+  }
+  const pool = cat.pool();
+  if (!pool.length) {
+    alert('This reward pool is empty right now, add some slugs to it in the code first.');
+    return;
+  }
+  const slug = pool[Math.floor(Math.random() * pool.length)];
+  try {
+    await claimRewardItem(slug, cat, key);
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function claimRewardItem(slug, cat, key) {
+  const data = await fetchItem(slug);
+  const tmMove = await getTMMoveName(slug);
+  const entry = {
+    uid: idCounter++,
+    slug: data.name,
+    display: formatItemName(data.name),
+    sprite: data.sprites && data.sprites.default,
+    tmMove,
+    description: extractItemDescription(data),
+  };
+  player.inventory.push(entry);
+  renderInventoryPanel();
+  const label = entry.tmMove ? `${entry.display} (${prettifySlug(entry.tmMove)})` : entry.display;
+  showRewardResult(`You got: ${label}`, cat.allowReroll ? { key, uid: entry.uid } : null);
+}
+
+async function onRerollReward(uid, key) {
+  const idx = player.inventory.findIndex(i => i.uid === uid);
+  if (idx !== -1) player.inventory.splice(idx, 1);
+  renderInventoryPanel();
+  await onClaimReward(key);
+}
+
+function renderShopPanel() {
+  const tabs = [
+    ['general', SHOP_CATALOG.general.label],
+    ['equipment', SHOP_CATALOG.equipment.label],
+    ['dojo', SHOP_CATALOG.dojo.label],
+    ['sell', 'Sell'],
+  ];
+  document.getElementById('shopNav').innerHTML = tabs.map(([key, label]) =>
+    `<button class="btn small shop-tab ${activeShop === key ? 'active' : ''}" onclick="onShopTabClick('${key}')">${label}</button>`
+  ).join('');
+
+  if (activeShop === 'sell') renderSellBody();
+  else renderShopTierBody(activeShop);
+}
+
+function onShopTabClick(key) {
+  activeShop = key;
+  renderShopPanel();
+}
+
+function onShopLevelClick(shopKey, level) {
+  player.shopLevels[shopKey] = level;
+  renderShopPanel();
+}
+
+function currentShopSlugs(shopKey) {
+  const level = player.shopLevels[shopKey];
+  const tiers = SHOP_CATALOG[shopKey].tiers;
+  let slugs = [];
+  for (let t = 1; t <= level; t++) slugs = slugs.concat(tiers[t] || []);
+  return slugs;
+}
+
+function renderShopTierBody(shopKey) {
+  const level = player.shopLevels[shopKey];
+  const slugs = currentShopSlugs(shopKey);
+
+  const levelBtns = [1, 2, 3].map(l =>
+    `<button class="btn small shop-level-btn ${level === l ? 'active' : ''}" onclick="onShopLevelClick('${shopKey}',${l})">Level ${l}</button>`
+  ).join('');
+
+  const rows = slugs.length ? slugs.map(slug => `
+    <div class="shop-item">
+      <div class="shop-item-top">
+        <span class="shop-item-name"><img class="shop-item-icon" id="icon-${slug}" style="display:none">${formatItemName(slug)}</span>
+        <span class="shop-item-price" id="price-${slug}">…</span>
+      </div>
+      <div class="shop-item-desc" id="desc-${slug}"></div>
+      <button class="btn small primary" onclick="onBuyShopItem('${slug}')">Buy</button>
+    </div>`).join('') : '<div class="empty-note">No items at this level.</div>';
+
+  document.getElementById('shopBody').innerHTML = `
+    <div class="shop-level-row">${levelBtns}</div>
+    <div class="shop-list">${rows}</div>`;
+
+  slugs.forEach(loadShopItemDetails);
+}
+
+async function loadShopItemDetails(slug) {
+  try {
+    const data = await fetchItem(slug);
+    const { buy } = extractItemPrice(data);
+    const desc = extractItemDescription(data);
+    const priceEl = document.getElementById(`price-${slug}`);
+    if (priceEl) priceEl.textContent = `${buy}₽`;
+    const descEl = document.getElementById(`desc-${slug}`);
+    if (descEl) descEl.textContent = desc;
+    const iconEl = document.getElementById(`icon-${slug}`);
+    if (iconEl && data.sprites && data.sprites.default) {
+      iconEl.src = data.sprites.default;
+      iconEl.style.display = '';
+    }
+  } catch (err) {
+    const priceEl = document.getElementById(`price-${slug}`);
+    if (priceEl) priceEl.textContent = '—';
+  }
+}
+
+async function onBuyShopItem(slug) {
+  if (player.inventory.length >= maxSlots()) { alert('Inventory is full. Expand it or free up a slot first.'); return; }
+  try {
+    const data = await fetchItem(slug);
+    const { buy } = extractItemPrice(data);
+    if (player.pokedollars < buy) { alert('Not enough Pokédollars.'); return; }
+    const tmMove = await getTMMoveName(slug);
+    player.pokedollars -= buy;
+    player.inventory.push({
+      uid: idCounter++,
+      slug: data.name,
+      display: formatItemName(data.name),
+      sprite: data.sprites && data.sprites.default,
+      tmMove,
+      description: extractItemDescription(data),
+    });
+    renderApp();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function renderSellBody() {
+  sellSelected = new Set([...sellSelected].filter(uid => player.inventory.some(i => i.uid === uid)));
+
+  const rows = player.inventory.length ? player.inventory.map(i => `
+    <label class="sell-row">
+      <input type="checkbox" ${sellSelected.has(i.uid) ? 'checked' : ''} onchange="onToggleSell(${i.uid}, this.checked)">
+      ${i.sprite ? `<img src="${i.sprite}">` : ''}
+      <span class="sell-name">${i.display}</span>
+      <span class="sell-price" id="sellPrice-${i.uid}">…</span>
+    </label>`).join('') : '<div class="empty-note">Inventory is empty.</div>';
+
+  document.getElementById('shopBody').innerHTML = `
+    <div class="sell-list">${rows}</div>
+    <div class="sell-actions">
+      <span class="sell-total" id="sellTotal"></span>
+      <button class="btn small primary" onclick="onConfirmSell()">Confirm Sell</button>
+    </div>`;
+
+  player.inventory.forEach(loadSellPrice);
+  updateSellTotal();
+}
+
+async function loadSellPrice(item) {
+  try {
+    const data = await fetchItem(item.slug);
+    const { sell } = extractItemPrice(data);
+    item._sellPrice = sell;
+    const el = document.getElementById(`sellPrice-${item.uid}`);
+    if (el) el.textContent = `${sell}₽`;
+    updateSellTotal();
+  } catch (err) {
+    const el = document.getElementById(`sellPrice-${item.uid}`);
+    if (el) el.textContent = '—';
+  }
+}
+
+function updateSellTotal() {
+  const el = document.getElementById('sellTotal');
+  if (!el) return;
+  const total = [...sellSelected].reduce((sum, uid) => {
+    const item = player.inventory.find(i => i.uid === uid);
+    return sum + (item && item._sellPrice ? item._sellPrice : 0);
+  }, 0);
+  el.textContent = `Selected: ${sellSelected.size} item(s), ${total}₽`;
+}
+
+function onToggleSell(uid, checked) {
+  if (checked) sellSelected.add(uid); else sellSelected.delete(uid);
+  updateSellTotal();
+}
+
+function onConfirmSell() {
+  if (!sellSelected.size) { alert('Select at least one item to sell.'); return; }
+  let total = 0;
+  player.inventory = player.inventory.filter(i => {
+    if (sellSelected.has(i.uid)) { total += i._sellPrice || 0; return false; }
+    return true;
+  });
+  player.pokedollars += total;
+  sellSelected = new Set();
+  renderApp();
+}
+
+function onSelectItem(uid) {
+  selectedItemUid = (selectedItemUid === uid) ? null : uid;
+  renderInventoryPanel();
+}
+
+async function onConsumeItem() {
+  const idx = player.inventory.findIndex(i => i.uid === selectedItemUid);
+  if (idx === -1) return;
+  const item = player.inventory[idx];
+  const moveName = item.tmMove !== undefined ? item.tmMove : await getTMMoveName(item.slug);
+
+  if (moveName) {
+    const mon = player.pokemon;
+    if (!mon) { alert('Search for your Pokémon first before using a TM/HM.'); return; }
+
+    const p = mon.movePool;
+    const canLearn = p.machine.has(moveName) || p.tutor.has(moveName) || p.egg.has(moveName) || p.levelUp.some(m => m.name === moveName);
+    if (!canLearn) {
+      alert(`${mon.displayName} can't learn ${prettifySlug(moveName)}. Nothing happens. Use Discard if you want it out of your inventory anyway.`);
+      return;
+    }
+
+    if (!mon.learnedExtra.includes(moveName)) mon.learnedExtra.push(moveName);
+    player.inventory.splice(idx, 1);
+    selectedItemUid = null;
+    renderApp();
+    return;
+  }
+
+  player.inventory.splice(idx, 1);
+  selectedItemUid = null;
+  renderInventoryPanel();
+}
+
+function onDiscardItem() {
+  player.inventory = player.inventory.filter(i => i.uid !== selectedItemUid);
+  selectedItemUid = null;
+  renderInventoryPanel();
+}
+
+function onGiveItem() {
+  const mon = player.pokemon;
+  if (!mon) { alert('Search for your Pokémon first.'); return; }
+  if (mon.heldItem) { alert(`${mon.displayName} is already holding ${mon.heldItem.display}. Remove it before giving a new item.`); return; }
+  const idx = player.inventory.findIndex(i => i.uid === selectedItemUid);
+  if (idx === -1) return;
+  const item = player.inventory[idx];
+  mon.heldItem = { slug: item.slug, display: item.display, sprite: item.sprite };
+  player.inventory.splice(idx, 1);
+  selectedItemUid = null;
+  renderApp();
+}
+
+function onExpandInventory() {
+  if (player.expansions >= MAX_EXPANSIONS) return;
+  if (player.pokedollars < EXPAND_COST) return;
+  player.pokedollars -= EXPAND_COST;
+  player.expansions += 1;
+  renderInventoryPanel();
+}
+
+document.getElementById('pdInput').addEventListener('input', e => {
+  const val = Number(e.target.value);
+  player.pokedollars = isNaN(val) ? 0 : val;
+  renderInventoryPanel();
+});
+document.getElementById('expandBtn').addEventListener('click', onExpandInventory);
+document.getElementById('itemSearch').addEventListener('input', onSearchItem);
+
+// Save code
+
+function buildSaveObject() {
+  return {
+    v: 1,
+    pd: player.pokedollars,
+    ex: player.expansions,
+    sl: player.shopLevels,
+    inv: player.inventory.map(i => ({ s: i.slug, d: i.display, sp: i.sprite, tm: i.tmMove || null, de: i.description || null })),
+    mon: player.pokemon ? {
+      sp: player.pokemon.speciesSlug,
+      fm: player.pokemon.formSlug,
+      lvl: player.pokemon.level,
+      ip: player.pokemon.investedPoints,
+      hi: player.pokemon.heldItem,
+      ab: player.pokemon.currentAbility,
+      le: player.pokemon.learnedExtra,
+      am: player.pokemon.activeMoves,
+    } : null,
+  };
+}
+
+function onGenerateSaveCode() {
+  const json = JSON.stringify(buildSaveObject());
+  const code = btoa(unescape(encodeURIComponent(json)));
+  document.getElementById('saveCodeOutput').value = code;
+}
+
+async function onLoadSaveCode() {
+  const code = document.getElementById('saveCodeInput').value.trim();
+  if (!code) { alert('Paste a save code first.'); return; }
+  try {
+    const json = decodeURIComponent(escape(atob(code)));
+    const obj = JSON.parse(json);
+
+    player.pokedollars = obj.pd || 0;
+    player.expansions = obj.ex || 0;
+    player.shopLevels = Object.assign({ general: 1, equipment: 1, dojo: 1 }, obj.sl || {});
+    player.inventory = (obj.inv || []).map(i => ({ uid: idCounter++, slug: i.s, display: i.d, sprite: i.sp, tmMove: i.tm !== undefined ? i.tm : null, description: i.de !== undefined ? i.de : null }));
+
+    if (obj.mon) {
+      const data = await fetchPokemon(obj.mon.fm || obj.mon.sp);
+      player.pokemon = await buildMonFrom(data, {
+        level: obj.mon.lvl || 1,
+        investedPoints: Object.assign({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }, obj.mon.ip || {}),
+        heldItem: obj.mon.hi || null,
+        learnedExtra: obj.mon.le || [],
+        activeMoves: obj.mon.am || [],
+      });
+      if (obj.mon.ab && player.pokemon.abilityOptions.some(a => a.slug === obj.mon.ab)) {
+        player.pokemon.currentAbility = obj.mon.ab;
+      }
+      draftActiveMoves = player.pokemon.activeMoves.slice();
+    } else {
+      player.pokemon = null;
+      draftActiveMoves = [];
+    }
+
+    selectedItemUid = null;
+    expandedMoveSlug = null;
+    renderApp();
+    alert('Save loaded.');
+  } catch (err) {
+    console.error(err);
+    alert('That save code could not be read. Double check you copied the whole thing.');
+  }
+}
+
+document.getElementById('generateBtn').addEventListener('click', onGenerateSaveCode);
+document.getElementById('loadBtn').addEventListener('click', onLoadSaveCode);
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const ta = document.getElementById('saveCodeOutput');
+  if (!ta.value) { alert('Generate a code first.'); return; }
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    const btn = document.getElementById('copyBtn');
+    const original = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+  } catch (err) {
+    ta.select();
+    document.execCommand('copy');
+  }
+});
+
+// init
+loadAllSpecies();
+loadAllItems();
+loadAllMoves();
+loadMoveRanges();
+renderApp();
+</script>
+</body>
+</html>

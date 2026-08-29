@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nature Test</title>
+<style>
+  :root {
+    --bg: #15161a;
+    --panel: #1e2025;
+    --border: #2c2f36;
+    --text: #e9e9ee;
+    --text-dim: #9a9ca5;
+    --accent: #8b93f8;
+    --accent-dim: #4a4f8f;
+    --good: #6fd08c;
+    --warn: #e0b877;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin: auto;
+  }
+  h1 { font-size: 22px; margin: 0 0 8px; }
+  h2 { font-size: 18px; margin: 24px 0 12px; font-weight: 600; }
+  h3 { font-size: 15px; margin: 0 0 4px; }
+  p { color: var(--text-dim); line-height: 1.5; font-size: 14px; }
+  .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+  .progress-fill { height: 100%; background: var(--accent); transition: width 0.2s ease; }
+  .progress-label { font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+  .question-text { font-size: 18px; line-height: 1.4; margin: 20px 0 28px; }
+  .scale { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .scale button {
+    flex: 1; aspect-ratio: 1; border-radius: 50%;
+    border: 1px solid var(--border); background: transparent; color: var(--text);
+    font-size: 15px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .scale button:hover { border-color: var(--accent); }
+  .scale button.selected { background: var(--accent); border-color: var(--accent); color: #14151a; font-weight: 700; }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 32px; }
+  .scale-labels span:last-child { text-align: right; }
+  .nav-row { display: flex; justify-content: space-between; gap: 12px; }
+  button.nav {
+    flex: 1; padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--text); font-size: 14px; cursor: pointer;
+  }
+  button.nav.primary { background: var(--accent); border-color: var(--accent); color: #14151a; font-weight: 600; }
+  button.nav:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.nav.primary:disabled { background: var(--accent-dim); border-color: var(--accent-dim); color: var(--text-dim); }
+  .start-btn {
+    width: 100%; padding: 14px; border-radius: 8px; border: none;
+    background: var(--accent); color: #14151a; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 20px;
+  }
+  .result-nature { font-size: 30px; font-weight: 700; color: var(--accent); margin: 4px 0 2px; }
+  .result-type { font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 24px; }
+  .bar-row { display: grid; grid-template-columns: 90px 1fr 34px; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-label { font-size: 13px; color: var(--text-dim); }
+  .bar-track { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--good); border-radius: 5px; }
+  .bar-fill.top { background: var(--accent); }
+  .bar-value { font-size: 12px; color: var(--text-dim); text-align: right; }
+  details { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--text-dim); }
+  .debug {
+    font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-top: 10px;
+    white-space: pre-wrap; font-family: ui-monospace, monospace;
+  }
+  .poke-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .poke-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .poke-card:hover { border-color: var(--accent-dim); }
+  .poke-card.selected { border-color: var(--accent); background: rgba(139,147,248,0.08); }
+  .poke-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+  .poke-card-top-text { flex: 1; }
+  .poke-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .poke-vibe { font-size: 12px; color: var(--text-dim); }
+  .expand-toggle {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .expand-toggle:hover { border-color: var(--accent-dim); color: var(--text); }
+  .poke-card.expanded .expand-toggle { transform: rotate(180deg); border-color: var(--accent-dim); }
+  .poke-card-details { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .poke-card.expanded .poke-card-details { display: block; }
+  .poke-section-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .poke-card-details .poke-section-label:not(:first-child) { margin-top: 14px; }
+  .bar-row.mini { grid-template-columns: 96px 1fr 26px; gap: 8px; margin-bottom: 5px; }
+  .bar-row.mini .bar-label { font-size: 11px; line-height: 1.2; }
+  .bar-row.mini .bar-track { height: 7px; }
+  .bar-row.mini .bar-value { font-size: 11px; }
+  .placeholder-box {
+    font-size: 12px; color: var(--text-dim); font-style: italic;
+    border: 1px dashed var(--border); border-radius: 6px; padding: 8px 10px;
+  }
+  .detail-section { margin-bottom: 18px; }
+  .detail-section h3 { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 28px; }
+
+  /* ---------- PokeAPI-driven visuals ---------- */
+  .poke-card-top-text-with-sprite { display: flex; align-items: center; gap: 10px; }
+  .poke-sprite { width: 36px; height: 36px; image-rendering: pixelated; flex-shrink: 0; }
+  .poke-sprite-empty { background: var(--panel2, var(--panel)); border-radius: 6px; }
+  .hero { text-align: center; margin-bottom: 4px; }
+  .hero-img { width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; }
+  .move-tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .move-tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 100px; padding: 5px 12px;
+    background: var(--panel2, var(--panel));
+  }
+  .type-badge {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px;
+    border-radius: 4px; background: var(--border); color: var(--text-dim);
+  }
+  .type-badge.hidden-badge { background: rgba(224,184,119,0.18); color: var(--warn); }
+</style>
+</head>
+<body>
+
+<div class="card" id="app"></div>
+
+<script>
+const COMBAT_KEYS = [
+  { key: 'hp',  name: 'HP' },
+  { key: 'atk', name: 'Attack' },
+  { key: 'def', name: 'Defense' },
+  { key: 'spa', name: 'Sp. Atk' },
+  { key: 'spd', name: 'Sp. Def' },
+  { key: 'spe', name: 'Speed' },
+];
+const PERSONALITY_MAX = 6;
+const COMBAT_MAX = 40;
+
+function personalityBars(stats, mini) {
+  const topVal = Math.max(...STATS.map(s => stats[s.key]));
+  return STATS.map(s => `
+    <div class="bar-row${mini ? ' mini' : ''}">
+      <div class="bar-label">${s.name}</div>
+      <div class="bar-track"><div class="bar-fill ${stats[s.key] === topVal ? 'top' : ''}" style="width:${(stats[s.key]/PERSONALITY_MAX)*100}%"></div></div>
+      <div class="bar-value">${stats[s.key]}</div>
+    </div>
+  `).join('');
+}
+
+function combatBars(combat, mini) {
+  const topVal = Math.max(...COMBAT_KEYS.map(c => combat[c.key]));
+  return COMBAT_KEYS.map(c => `
+    <div class="bar-row${mini ? ' mini' : ''}">
+      <div class="bar-label">${c.name}</div>
+      <div class="bar-track"><div class="bar-fill ${combat[c.key] === topVal ? 'top' : ''}" style="width:${(combat[c.key]/COMBAT_MAX)*100}%"></div></div>
+      <div class="bar-value">${combat[c.key]}</div>
+    </div>
+  `).join('');
+}
+
+// Same base-stat -> combat-stat conversion the DM Combat Tool and Player
+// Profile use: base/5 rounded, HP doubled. On the pick-a-Pokémon screen we
+// show HP without that bump so it doesn't automatically dominate every card;
+// the detail screen shows the real (doubled) HP.
+function convertStat(base, key) {
+  const rounded = Math.round(base / 5);
+  return key === 'hp' ? rounded * 2 : rounded;
+}
+function combatStatsFromBase(base, doubleHP) {
+  const out = {};
+  COMBAT_KEYS.forEach(c => { out[c.key] = doubleHP ? convertStat(base[c.key], c.key) : Math.round(base[c.key] / 5); });
+  return out;
+}
+const STATS = [
+  { key: 'P',   name: 'Presence' },
+  { key: 'E',   name: 'Empathy' },
+  { key: 'D',   name: 'Deception' },
+  { key: 'C',   name: 'Cunning' },
+  { key: 'Im',  name: 'Intimidation' },
+  { key: 'Co',  name: 'Composure' },
+  { key: 'Ins', name: 'Insight' },
+  { key: 'R',   name: 'Reason' },
+];
+
+const SPECIALIST_NATURE = {
+  P: 'Brave', E: 'Gentle', D: 'Quirky', C: 'Impish',
+  Im: 'Adamant', Co: 'Calm', Ins: 'Careful', R: 'Serious',
+};
+
+const HYBRID_PAIRS = [
+  { stats: ['P','E'],  name: 'Jolly' },
+  { stats: ['P','D'],  name: 'Sassy' },
+  { stats: ['P','C'],  name: 'Bold' },
+  { stats: ['P','Im'], name: 'Hardy' },
+  { stats: ['P','Co'], name: 'Modest' },
+  { stats: ['C','D'],  name: 'Naughty' },
+  { stats: ['C','Im'], name: 'Rash' },
+  { stats: ['C','Ins'],name: 'Hasty' },
+  { stats: ['C','R'],  name: 'Lonely' },
+  { stats: ['E','Co'], name: 'Docile' },
+  { stats: ['E','Ins'],name: 'Bashful' },
+  { stats: ['E','R'],  name: 'Naive' },
+  { stats: ['D','Im'], name: 'Timid' },
+  { stats: ['D','Co'], name: 'Lax' },
+  { stats: ['Im','Ins'],name:'Quiet' },
+  { stats: ['Co','R'], name: 'Relaxed' },
+  { stats: ['Ins','R'],name: 'Mild' },
+];
+
+const QUESTIONS = [
+  { stat:'P', text:'When I speak, people naturally stop to listen.', reverse:false },
+  { stat:'P', text:'I like being the center of attention in a group.', reverse:false },
+  { stat:'P', text:'I can walk into a new social situation and immediately feel in control of it.', reverse:false },
+  { stat:'P', text:'I shrink back and let others lead when I\'m in a group.', reverse:true },
+  { stat:'P', text:'I feel awkward being watched or the center of attention.', reverse:true },
+
+  { stat:'E', text:'Seeing someone cry makes me want to comfort them, even a stranger.', reverse:false },
+  { stat:'E', text:'I genuinely feel happy when good things happen to people I care about.', reverse:false },
+  { stat:'E', text:"I check in on friends when I sense they're struggling, even if they haven't said anything.", reverse:false },
+  { stat:'E', text:'I get impatient with people who are overly emotional.', reverse:true },
+  { stat:'E', text:"Other people's sadness doesn't really move me.", reverse:true },
+
+  { stat:'D', text:"I can lie straight to someone's face and make it land.", reverse:false },
+  { stat:'D', text:"I can hide what I'm really thinking behind a fake smile.", reverse:false },
+  { stat:'D', text:"I can put on a different persona to get what I want.", reverse:false },
+  { stat:'D', text:'I feel sick to my stomach whenever I try to lie.', reverse:true },
+  { stat:'D', text:"People usually catch on when I'm not being honest.", reverse:true },
+
+  { stat:'C', text:"I've talked someone into a decision that mainly benefited me.", reverse:false },
+  { stat:'C', text:"I look for the angle that gives me the upper hand, fair or not.", reverse:false },
+  { stat:'C', text:'I enjoy outmaneuvering someone in a negotiation or a game.', reverse:false },
+  { stat:'C', text:'I hold back from taking advantage of a situation, even when I easily could.', reverse:true },
+  { stat:'C', text:'I play things straight, even when a clever trick would serve me better.', reverse:true },
+
+  { stat:'Im', text:"I've made someone back down just by getting in their face.", reverse:false },
+  { stat:'Im', text:"I'm fine with people being a little afraid of me.", reverse:false },
+  { stat:'Im', text:'Getting louder or stepping closer is an easy way for me to win an argument.', reverse:false },
+  { stat:'Im', text:"I try hard not to come across as scary.", reverse:true },
+  { stat:'Im', text:"Even when I'm angry, I keep my tone soft and non-threatening.", reverse:true },
+
+  { stat:'Co', text:"Even when everything's going wrong, I don't feel myself getting worked up.", reverse:false },
+  { stat:'Co', text:'I can take an insult without my expression changing.', reverse:false },
+  { stat:'Co', text:'I think clearly under pressure instead of panicking.', reverse:false },
+  { stat:'Co', text:'My hands shake or my voice cracks when I\'m stressed.', reverse:true },
+  { stat:'Co', text:"I snap at people when I'm overwhelmed.", reverse:true },
+
+  { stat:'Ins', text:"I can spot when someone's story doesn't add up, even if I can't say why yet.", reverse:false },
+  { stat:'Ins', text:'I notice the one detail in a room that seems out of place.', reverse:false },
+  { stat:'Ins', text:'I can guess what someone actually wants, even if they say otherwise.', reverse:false },
+  { stat:'Ins', text:'I tend to believe what people tell me at face value.', reverse:true },
+  { stat:'Ins', text:"I'm usually blindsided when someone turns out to have been lying to me.", reverse:true },
+
+  { stat:'R', text:'I solve problems by working through them logically, step by step.', reverse:false },
+  { stat:'R', text:'I can build a solid argument for my position, backed by evidence.', reverse:false },
+  { stat:'R', text:'When something goes wrong, I trace it back step by step to find out exactly what caused it.', reverse:false },
+  { stat:'R', text:'I go with my gut instead of working through the pros and cons.', reverse:true },
+  { stat:'R', text:'I get lost trying to follow a long chain of logical steps.', reverse:true },
+];
+
+const SCALE_LABELS = ['Strongly disagree','Disagree','Neutral','Agree','Strongly agree'];
+
+const NATURE_POOL = {
+  Brave: [
+    { name:'Torchic', stats:{P:6,E:3,D:1,C:2,Im:4,Co:3,Ins:2,R:4}, vibe:'Spunky, hot-headed, straightforward fighter' },
+    { name:'Riolu', stats:{P:6,E:3,D:1,C:1,Im:3,Co:3,Ins:4,R:4}, vibe:'Aura-sensing, loyal, disciplined' },
+    { name:'Gible', stats:{P:6,E:2,D:2,C:3,Im:4,Co:2,Ins:2,R:4}, vibe:'Reckless biter, stubbornly determined' },
+  ],
+  Gentle: [
+    { name:'Popplio', stats:{P:4,E:6,D:2,C:2,Im:1,Co:3,Ins:3,R:4}, vibe:'Dramatic performer, cries easily, cares hard' },
+    { name:'Cleffa', stats:{P:3,E:6,D:1,C:2,Im:1,Co:4,Ins:4,R:4}, vibe:'Sweet, otherworldly, quietly intuitive' },
+    { name:'Togepi', stats:{P:4,E:6,D:1,C:1,Im:1,Co:4,Ins:4,R:4}, vibe:'Radiates pure joy, trusting, uplifting' },
+  ],
+  Quirky: [
+    { name:'Sobble', stats:{P:1,E:3,D:6,C:2,Im:1,Co:4,Ins:4,R:4}, vibe:'Camouflages when overwhelmed, unreadable by accident' },
+    { name:'Zorua', stats:{P:3,E:2,D:6,C:4,Im:2,Co:2,Ins:3,R:3}, vibe:'Illusion trickster, playful mischief' },
+    { name:'Zigzagoon (Galar)', stats:{P:3,E:1,D:6,C:4,Im:3,Co:2,Ins:2,R:4}, vibe:'Thieving troublemaker, rambunctious' },
+  ],
+  Impish: [
+    { name:'Squirtle', stats:{P:4,E:2,D:3,C:6,Im:2,Co:3,Ins:2,R:3}, vibe:'Cocky gang-leader energy, shows off' },
+    { name:'Trapinch', stats:{P:1,E:1,D:3,C:6,Im:3,Co:3,Ins:4,R:4}, vibe:'Patient ambush predator, single-minded' },
+    { name:'Cacnea', stats:{P:2,E:2,D:4,C:6,Im:3,Co:3,Ins:2,R:3}, vibe:'Deceptively friendly, prickly payoff' },
+  ],
+  Adamant: [
+    { name:'Scorbunny', stats:{P:4,E:2,D:1,C:4,Im:6,Co:2,Ins:2,R:4}, vibe:'Competitive, kicks first, wants to win' },
+    { name:'Chespin', stats:{P:3,E:4,D:1,C:2,Im:6,Co:3,Ins:2,R:4}, vibe:'Protective, spiky-tough, brave defender' },
+    { name:'Larvitar', stats:{P:2,E:2,D:1,C:3,Im:6,Co:3,Ins:4,R:4}, vibe:'Single-minded growth drive, blunt force' },
+  ],
+  Calm: [
+    { name:'Froakie', stats:{P:4,E:2,D:2,C:3,Im:2,Co:6,Ins:3,R:3}, vibe:'Effortlessly cool, quietly skilled' },
+    { name:'Fuecoco', stats:{P:2,E:2,D:2,C:3,Im:4,Co:6,Ins:2,R:4}, vibe:'Totally unbothered, secretly excitable' },
+    { name:'Munchlax', stats:{P:2,E:4,D:1,C:3,Im:2,Co:6,Ins:3,R:4}, vibe:'Easygoing, patient, simple-hearted' },
+  ],
+  Careful: [
+    { name:'Cyndaquil', stats:{P:1,E:4,D:2,C:3,Im:2,Co:3,Ins:6,R:4}, vibe:'Hyper-aware, jumpy, flares up when startled' },
+    { name:'Natu', stats:{P:1,E:2,D:4,C:3,Im:1,Co:4,Ins:6,R:4}, vibe:'Cryptic, watches silently, prophetic' },
+    { name:'Wynaut', stats:{P:2,E:4,D:1,C:3,Im:1,Co:4,Ins:6,R:4}, vibe:'Senses trouble coming, oddly cheerful about it' },
+  ],
+  Serious: [
+    { name:'Turtwig', stats:{P:2,E:3,D:1,C:2,Im:3,Co:4,Ins:4,R:6}, vibe:'Steady, grounded, stubborn thinker' },
+    { name:'Quaxly', stats:{P:4,E:2,D:1,C:2,Im:2,Co:4,Ins:4,R:6}, vibe:'Diligent, disciplined perfectionist' },
+    { name:'Beldum', stats:{P:1,E:1,D:2,C:3,Im:4,Co:4,Ins:4,R:6}, vibe:'Single-minded, mechanical, obsessive focus' },
+  ],
+  Jolly: [
+    { name:'Grookey', stats:{P:5,E:5,D:1,C:2,Im:3,Co:4,Ins:2,R:3}, vibe:'Infectiously joyful, rhythmic natural leader' },
+    { name:'Pichu', stats:{P:5,E:5,D:2,C:1,Im:1,Co:4,Ins:4,R:3}, vibe:'Small, sweet, easily overwhelmed by its own energy' },
+    { name:'Buneary', stats:{P:5,E:5,D:1,C:4,Im:1,Co:2,Ins:3,R:4}, vibe:'Bubbly, eager to please, easily flustered' },
+  ],
+  Sassy: [
+    { name:'Oshawott', stats:{P:5,E:4,D:5,C:2,Im:1,Co:2,Ins:4,R:2}, vibe:'Dramatic, impulsive showman all flair, no forethought' },
+    { name:'Mime Jr.', stats:{P:5,E:2,D:5,C:3,Im:1,Co:2,Ins:4,R:3}, vibe:'Mimic, performs for laughs and attention' },
+    { name:'Milcery', stats:{P:5,E:4,D:5,C:1,Im:1,Co:3,Ins:3,R:3}, vibe:'Whimsical, charming, trail of sweetness' },
+  ],
+  Bold: [
+    { name:'Rufflet', stats:{P:5,E:3,D:2,C:5,Im:4,Co:2,Ins:2,R:2}, vibe:'Proud, ambitious, wants to prove itself worthy' },
+    { name:'Impidimp', stats:{P:5,E:1,D:4,C:5,Im:1,Co:3,Ins:3,R:3}, vibe:'Mischievous imp, scheming little troublemaker' },
+    { name:'Deino', stats:{P:5,E:1,D:1,C:5,Im:4,Co:3,Ins:2,R:4}, vibe:'Blind but headstrong, reckless ambition' },
+  ],
+  Hardy: [
+    { name:'Charmander', stats:{P:5,E:2,D:1,C:4,Im:5,Co:3,Ins:3,R:2}, vibe:'Prideful, hot-tempered, fierce and direct' },
+    { name:'Totodile', stats:{P:5,E:1,D:1,C:4,Im:5,Co:2,Ins:3,R:4}, vibe:'Boisterous, bites hard, reckless enthusiasm' },
+    { name:'Bagon', stats:{P:5,E:1,D:2,C:4,Im:5,Co:2,Ins:3,R:3}, vibe:'Headstrong, headbutts obstacles, stubborn dreamer' },
+  ],
+  Modest: [
+    { name:'Piplup', stats:{P:5,E:2,D:3,C:2,Im:2,Co:5,Ins:2,R:4}, vibe:'Proud, refuses help, dignified but insecure' },
+    { name:'Ponyta', stats:{P:5,E:4,D:1,C:1,Im:2,Co:5,Ins:4,R:3}, vibe:'Graceful, skittish yet noble' },
+    { name:'Frigibax', stats:{P:5,E:2,D:1,C:2,Im:4,Co:5,Ins:4,R:2}, vibe:'Small dignified dragon, quietly resolved' },
+  ],
+  Naughty: [
+    { name:'Sprigatito', stats:{P:3,E:2,D:5,C:5,Im:1,Co:2,Ins:3,R:4}, vibe:'Playful, mischievous, a little vain' },
+    { name:'Sableye', stats:{P:2,E:1,D:5,C:5,Im:3,Co:3,Ins:3,R:3}, vibe:'Unnervingly still, sly grin, gem-eyed trickster' },
+    { name:'Inkay', stats:{P:2,E:1,D:5,C:5,Im:2,Co:2,Ins:4,R:4}, vibe:'Manipulative, disorienting, sly predator' },
+  ],
+  Rash: [
+    { name:'Scraggy', stats:{P:3,E:1,D:2,C:5,Im:5,Co:2,Ins:3,R:4}, vibe:'Thuggish, headbutts first, tough-guy posturing' },
+    { name:'Mareanie', stats:{P:1,E:1,D:4,C:5,Im:5,Co:3,Ins:4,R:2}, vibe:'Backstabbing opportunist, ruthless partner-eater' },
+    { name:'Sneasel (Hisuian)', stats:{P:3,E:1,D:2,C:5,Im:5,Co:2,Ins:4,R:3}, vibe:'Savage, territorial, feral predator' },
+  ],
+  Hasty: [
+    { name:'Fennekin', stats:{P:3,E:1,D:4,C:5,Im:1,Co:3,Ins:5,R:3}, vibe:'Clever, witty, sharp-tongued and quick' },
+    { name:'Wingull', stats:{P:4,E:1,D:3,C:5,Im:3,Co:2,Ins:5,R:2}, vibe:'Opportunistic scavenger, quick and shameless' },
+    { name:'Rockruff', stats:{P:2,E:3,D:1,C:5,Im:3,Co:2,Ins:5,R:4}, vibe:'Alert tracker, friendly but sharp instincts' },
+  ],
+  Lonely: [
+    { name:'Charcadet', stats:{P:2,E:1,D:2,C:5,Im:3,Co:4,Ins:3,R:5}, vibe:'Quiet, solitary, burns intensely inside' },
+    { name:'Ferroseed', stats:{P:1,E:1,D:3,C:5,Im:2,Co:4,Ins:4,R:5}, vibe:'Defensive, methodical, patient underground strategist' },
+    { name:'Baltoy', stats:{P:1,E:1,D:4,C:5,Im:1,Co:4,Ins:4,R:5}, vibe:'Ancient, mysterious, unreadable calculating mind' },
+  ],
+  Docile: [
+    { name:'Bulbasaur', stats:{P:3,E:5,D:1,C:2,Im:2,Co:5,Ins:4,R:3}, vibe:'Steady, calm, protective plant-parent energy' },
+    { name:'Chikorita', stats:{P:2,E:5,D:1,C:4,Im:2,Co:5,Ins:4,R:2}, vibe:'Loyal, a bit stubborn about attachment' },
+    { name:'Mareep', stats:{P:2,E:5,D:2,C:1,Im:2,Co:5,Ins:4,R:4}, vibe:'Fluffy, gentle, easily startled' },
+  ],
+  Bashful: [
+    { name:'Chimchar', stats:{P:4,E:5,D:1,C:2,Im:1,Co:4,Ins:5,R:3}, vibe:'Resilient, cheerful but sensitive underneath' },
+    { name:'Noibat', stats:{P:3,E:5,D:2,C:2,Im:1,Co:4,Ins:5,R:3}, vibe:'Timid, overlooked, perceptive with sound' },
+    { name:'Hatenna', stats:{P:1,E:5,D:4,C:1,Im:1,Co:4,Ins:5,R:4}, vibe:'Overwhelmed by feelings, retreats into itself' },
+  ],
+  Naive: [
+    { name:'Mudkip', stats:{P:3,E:5,D:1,C:2,Im:1,Co:4,Ins:4,R:5}, vibe:'Cheerful, simple, straightforward and trusting' },
+    { name:'Tepig', stats:{P:3,E:5,D:1,C:2,Im:2,Co:3,Ins:4,R:5}, vibe:'Clumsy but eager, warmhearted, a little naive' },
+    { name:'Tinkatink', stats:{P:2,E:5,D:1,C:3,Im:1,Co:4,Ins:4,R:5}, vibe:'Small, sincere, earnest little craftsman' },
+  ],
+  Timid: [
+    { name:'Litten', stats:{P:2,E:2,D:5,C:2,Im:5,Co:3,Ins:3,R:3}, vibe:'Aloof, guarded, real menace when provoked' },
+    { name:'Pawniard', stats:{P:1,E:1,D:5,C:3,Im:5,Co:3,Ins:4,R:3}, vibe:'Cold, blade-sharp, disciplined menace' },
+    { name:'Golett', stats:{P:1,E:1,D:5,C:2,Im:5,Co:4,Ins:3,R:4}, vibe:'Silent, ominous, hollow but purposeful' },
+  ],
+  Lax: [
+    { name:'Snivy', stats:{P:4,E:1,D:5,C:2,Im:1,Co:5,Ins:4,R:3}, vibe:'Smug, unreadable, effortlessly condescending' },
+    { name:'Duskull', stats:{P:1,E:2,D:5,C:2,Im:3,Co:5,Ins:4,R:3}, vibe:'Silent, watchful, patiently guards its intent' },
+    { name:'Solosis', stats:{P:2,E:1,D:5,C:3,Im:1,Co:5,Ins:4,R:4}, vibe:'Blank membrane hides all thought' },
+  ],
+  Quiet: [
+    { name:'Treecko', stats:{P:2,E:1,D:2,C:3,Im:5,Co:3,Ins:5,R:4}, vibe:'Cool, still, calculating predator' },
+    { name:'Cranidos', stats:{P:2,E:1,D:2,C:4,Im:5,Co:4,Ins:5,R:2}, vibe:'Aggressive fossil predator, primal watchfulness' },
+    { name:'Axew', stats:{P:3,E:2,D:1,C:3,Im:5,Co:4,Ins:5,R:2}, vibe:'Small but fierce, eager to prove itself' },
+  ],
+  Relaxed: [
+    { name:'Rowlet', stats:{P:2,E:2,D:3,C:2,Im:2,Co:5,Ins:4,R:5}, vibe:'Laid-back on the surface, secretly sharp and serious' },
+    { name:'Chingling', stats:{P:1,E:4,D:1,C:3,Im:2,Co:5,Ins:4,R:5}, vibe:'Meditative, gentle, contemplative' },
+    { name:'Wooper', stats:{P:2,E:4,D:1,C:2,Im:2,Co:5,Ins:4,R:5}, vibe:'Blissfully unbothered, happy wherever it is' },
+  ],
+  Mild: [
+    { name:'Aron', stats:{P:3,E:1,D:1,C:2,Im:4,Co:4,Ins:5,R:5}, vibe:'Sturdy, single-minded, straightforward little tank' },
+    { name:'Ralts', stats:{P:2,E:4,D:1,C:3,Im:1,Co:4,Ins:5,R:5}, vibe:"Extremely sensitive, feels others' emotions intensely" },
+    { name:'Magnemite', stats:{P:1,E:1,D:2,C:4,Im:3,Co:4,Ins:5,R:5}, vibe:'Mechanical, pattern-driven, single-purpose focus' },
+  ],
+};
+
+// =========================================================================
+// PokeAPI integration
+// Every NATURE_POOL entry above is just personality flavor (name/stats/vibe)
+// — sprites, base stats, lore, starting moveset, and ability are all pulled
+// live from PokeAPI here and cached per Pokémon name, the same way the DM
+// Combat Tool and Player Profile pages do it.
+// =========================================================================
+
+const API = 'https://pokeapi.co/api/v2/';
+const API_STAT_MAP = { hp: 'hp', attack: 'atk', defense: 'def', 'special-attack': 'spa', 'special-defense': 'spd', speed: 'spe' };
+
+// A handful of pool entries are regional forms and need an explicit
+// pokemon-slug (the variety) separate from the species slug (for lore) —
+// everything else slugifies cleanly on its own.
+const POKE_SLUG_OVERRIDES = {
+  'Zigzagoon (Galar)': { pokemon: 'zigzagoon-galar', species: 'zigzagoon' },
+  'Sneasel (Hisuian)': { pokemon: 'sneasel-hisui', species: 'sneasel' },
+};
+function defaultSlug(name) {
+  return name.toLowerCase().replace(/'/g, '').replace(/\./g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '');
+}
+function resolveSlugs(name) {
+  if (POKE_SLUG_OVERRIDES[name]) return POKE_SLUG_OVERRIDES[name];
+  const s = defaultSlug(name);
+  return { pokemon: s, species: s };
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} failed (${res.status})`);
+  return res.json();
+}
+
+function extractSpeciesLore(speciesData) {
+  const entries = (speciesData.flavor_text_entries || []).filter(e => e.language.name === 'en');
+  if (!entries.length) return '';
+  return entries[entries.length - 1].flavor_text.replace(/[\n\f\r]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Same oldest-to-newest version-group ordering as the Player Profile page,
+// used to pick one consistent generation's level-up curve per species.
+const VERSION_GROUP_ORDER = [
+  'red-blue', 'yellow', 'gold-silver', 'crystal', 'ruby-sapphire', 'emerald',
+  'firered-leafgreen', 'diamond-pearl', 'platinum', 'heartgold-soulsilver',
+  'black-white', 'black-2-white-2', 'x-y', 'omega-ruby-alpha-sapphire',
+  'sun-moon', 'ultra-sun-ultra-moon', 'lets-go-pikachu-lets-go-eevee',
+  'sword-shield', 'brilliant-diamond-and-shining-pearl', 'legends-arceus', 'scarlet-violet',
+];
+function pickCanonicalVersionGroup(pokeData) {
+  const present = new Set();
+  pokeData.moves.forEach(m => m.version_group_details.forEach(d => present.add(d.version_group.name)));
+  for (let i = VERSION_GROUP_ORDER.length - 1; i >= 0; i--) {
+    if (present.has(VERSION_GROUP_ORDER[i])) return VERSION_GROUP_ORDER[i];
+  }
+  return present.size ? present.values().next().value : null;
+}
+// Starting moveset: whatever a fresh level-5 Pokémon would know, straight
+// from PokeAPI's level-up learnset (no multiplying by 5 — these are brand
+// new, not a leveled-up player Pokémon).
+function buildLevel5MovePool(pokeData) {
+  const versionGroup = pickCanonicalVersionGroup(pokeData);
+  const levelUp = [];
+  pokeData.moves.forEach(m => {
+    const detail = m.version_group_details.find(d => d.version_group.name === versionGroup);
+    if (!detail || detail.move_learn_method.name !== 'level-up') return;
+    levelUp.push({ slug: m.move.name, level: detail.level_learned_at || 0 });
+  });
+  levelUp.sort((a, b) => a.level - b.level || a.slug.localeCompare(b.slug));
+  return levelUp.filter(m => m.level <= 5);
+}
+
+// Same weighted ability roll as the DM Combat Tool's pickWildAbility: hidden
+// ability (if any) is a flat 10% total, the rest splits evenly across the
+// common slots (90/10 with one common, 45/45/10 with two, 100% split if
+// there's no hidden ability at all).
+function pickWeightedAbility(pokeData) {
+  const commons = pokeData.abilities.filter(a => !a.is_hidden).map(a => a.ability.name);
+  const hiddens = pokeData.abilities.filter(a => a.is_hidden).map(a => a.ability.name);
+  const pool = [];
+  if (commons.length && hiddens.length) {
+    const commonW = 90 / commons.length, hiddenW = 10 / hiddens.length;
+    commons.forEach(n => pool.push({ name: n, weight: commonW, hidden: false }));
+    hiddens.forEach(n => pool.push({ name: n, weight: hiddenW, hidden: true }));
+  } else if (commons.length) {
+    const w = 100 / commons.length;
+    commons.forEach(n => pool.push({ name: n, weight: w, hidden: false }));
+  } else if (hiddens.length) {
+    const w = 100 / hiddens.length;
+    hiddens.forEach(n => pool.push({ name: n, weight: w, hidden: true }));
+  }
+  if (!pool.length) return null;
+  const total = pool.reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (const p of pool) { if (r < p.weight) return p; r -= p.weight; }
+  return pool[pool.length - 1];
+}
+
+function prettifySlug(slug) {
+  return slug.split('-').filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+// One cache entry per pool Pokémon name, holding everything fetched from
+// PokeAPI plus the ability roll (rolled once and kept, not re-rolled on
+// every render).
+const MON_DATA = {};
+const MOVE_TYPE_CACHE = {};
+
+function ensureMonData(name) {
+  if (MON_DATA[name]) return MON_DATA[name].promise;
+  const entry = { loaded: false, loading: true, error: false };
+  MON_DATA[name] = entry;
+  entry.promise = (async () => {
+    try {
+      const { pokemon, species } = resolveSlugs(name);
+      const [pokeData, speciesData] = await Promise.all([
+        fetchJson(`${API}pokemon/${pokemon}`),
+        fetchJson(`${API}pokemon-species/${species}`),
+      ]);
+      entry.sprite = pokeData.sprites && pokeData.sprites.front_default;
+      entry.artwork = (pokeData.sprites && pokeData.sprites.other && pokeData.sprites.other['official-artwork']
+        && pokeData.sprites.other['official-artwork'].front_default) || entry.sprite;
+      entry.types = pokeData.types.map(t => t.type.name);
+      entry.base = {};
+      pokeData.stats.forEach(s => {
+        const key = API_STAT_MAP[s.stat.name];
+        if (key) entry.base[key] = s.base_stat;
+      });
+      entry.lore = extractSpeciesLore(speciesData);
+      entry.ability = pickWeightedAbility(pokeData);
+      entry.movePool = buildLevel5MovePool(pokeData);
+      entry.loaded = true;
+    } catch (err) {
+      console.warn('Could not load PokeAPI data for', name, err);
+      entry.error = true;
+    } finally {
+      entry.loading = false;
+    }
+  })();
+  return entry.promise;
+}
+
+// Move types are only needed once someone reaches the detail screen's
+// Moveset section, so they're fetched lazily rather than for every Pokémon
+// in the whole test up front.
+async function ensureMoveTypes(slugs) {
+  const missing = slugs.filter(s => !MOVE_TYPE_CACHE.hasOwnProperty(s));
+  if (!missing.length) return;
+  await Promise.all(missing.map(async slug => {
+    try {
+      const data = await fetchJson(`${API}move/${slug}`);
+      MOVE_TYPE_CACHE[slug] = data.type ? data.type.name : null;
+    } catch (err) {
+      MOVE_TYPE_CACHE[slug] = null;
+    }
+  }));
+}
+
+function findHybrid(a, b) {
+  return HYBRID_PAIRS.find(p =>
+    (p.stats[0] === a && p.stats[1] === b) ||
+    (p.stats[0] === b && p.stats[1] === a)
+  );
+}
+
+const ANTAGONISTS = { P:'Ins', Ins:'P', E:'C', C:'E', D:'R', R:'D', Im:'Co', Co:'Im' };
+
+const ANTAGONIST_WEIGHT = 1;
+
+const MIN_DISPLAY_SCORE = 0;
+const MAX_DISPLAY_SCORE = 30;
+
+const SPECIALIST_MARGIN = 3;
+
+function determineNature(scores) {
+  const mean = STATS.reduce((sum, s) => sum + scores[s.key], 0) / STATS.length;
+
+  const ranked = STATS
+    .map(s => ({ key: s.key, name: s.name, score: scores[s.key], dev: scores[s.key] - mean }))
+    .sort((a, b) => b.dev - a.dev);
+
+  const [top, second, third] = ranked;
+  const log = [];
+  log.push(`Final scores: ${ranked.map(r => `${r.name}=${r.score}`).join(', ')}`);
+  log.push(`Mean across all 8 stats: ${mean.toFixed(1)}`);
+  log.push(`Ranked by deviation from mean: ${ranked.map(r => `${r.name}=${r.dev.toFixed(1)}`).join(', ')}`);
+
+  const gap = top.dev - second.dev;
+  log.push(`#1 (${top.name}) leads #2 (${second.name}) by ${gap.toFixed(1)} (threshold: ${SPECIALIST_MARGIN})`);
+
+  if (gap >= SPECIALIST_MARGIN) {
+    log.push(`-> Clear standout trait. Specialist Nature: ${SPECIALIST_NATURE[top.key]}`);
+    return { nature: SPECIALIST_NATURE[top.key], type: 'Specialist', log };
+  }
+
+  let pair = findHybrid(top.key, second.key);
+  if (pair) {
+    log.push(`-> #1+#2 (${top.name}+${second.name}) is a valid Hybrid pair: ${pair.name}`);
+    return { nature: pair.name, type: 'Hybrid', log };
+  }
+  log.push(`-> #1+#2 (${top.name}+${second.name}) is not a valid Hybrid pair. Checking fallback.`);
+
+  pair = findHybrid(top.key, third.key);
+  if (pair) {
+    log.push(`-> #1+#3 (${top.name}+${third.name}) is a valid Hybrid pair: ${pair.name}`);
+    return { nature: pair.name, type: 'Hybrid (fallback)', log };
+  }
+
+  pair = findHybrid(second.key, third.key);
+  if (pair) {
+    log.push(`-> #2+#3 (${second.name}+${third.name}) is a valid Hybrid pair: ${pair.name}`);
+    return { nature: pair.name, type: 'Hybrid (fallback)', log };
+  }
+
+  log.push(`-> No valid pair found among top 3. Defaulting to Specialist of #1: ${SPECIALIST_NATURE[top.key]}`);
+  return { nature: SPECIALIST_NATURE[top.key], type: 'Specialist (default)', log };
+}
+
+let screen = 'intro';
+let qIndex = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let resultCache = null;
+let selectedMon = null;
+let expandedPoolCard = null;
+
+const app = document.getElementById('app');
+
+function render() {
+  if (screen === 'intro') return renderIntro();
+  if (screen === 'question') return renderQuestion();
+  if (screen === 'result') return renderResult();
+  if (screen === 'detail') return renderDetail();
+}
+
+function renderIntro() {
+  app.innerHTML = `
+    <h1>Nature Test</h1>
+    <p>40 short statements. Answer as you are, not as you wish to be. Your Nature will decide which Pokemon fits you best.</p>
+    <button class="start-btn" id="startBtn">Start</button>
+  `;
+  document.getElementById('startBtn').onclick = () => {
+    screen = 'question';
+    qIndex = 0;
+    render();
+  };
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[qIndex];
+  const current = answers[qIndex];
+  const pct = Math.round(((qIndex) / QUESTIONS.length) * 100);
+
+  app.innerHTML = `
+    <div class="progress-label">Question ${qIndex + 1} of ${QUESTIONS.length}</div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="question-text">${q.text}</div>
+    <div class="scale">
+      ${[1,2,3,4,5].map(v => `<button data-v="${v}" class="${current === v ? 'selected' : ''}">${v}</button>`).join('')}
+    </div>
+    <div class="scale-labels"><span>${SCALE_LABELS[0]}</span><span>${SCALE_LABELS[4]}</span></div>
+    <div class="nav-row">
+      <button class="nav" id="backBtn" ${qIndex === 0 ? 'disabled' : ''}>Back</button>
+      <button class="nav primary" id="nextBtn" ${current === null ? 'disabled' : ''}>
+        ${qIndex === QUESTIONS.length - 1 ? 'See results' : 'Next'}
+      </button>
+    </div>
+  `;
+
+  app.querySelectorAll('.scale button').forEach(btn => {
+    btn.onclick = () => {
+      answers[qIndex] = parseInt(btn.dataset.v, 10);
+      render();
+    };
+  });
+
+  document.getElementById('backBtn').onclick = () => {
+    if (qIndex > 0) { qIndex -= 1; render(); }
+  };
+
+  document.getElementById('nextBtn').onclick = () => {
+    if (answers[qIndex] === null) return;
+    if (qIndex === QUESTIONS.length - 1) {
+      screen = 'result';
+      render();
+    } else {
+      qIndex += 1;
+      render();
+    }
+  };
+}
+
+function computeScores() {
+  const scores = {};
+  STATS.forEach(s => scores[s.key] = 0);
+  QUESTIONS.forEach((q, i) => {
+    const raw = answers[i];
+    const val = q.reverse ? (6 - raw) : raw;
+    scores[q.stat] += val;
+    const antagonist = ANTAGONISTS[q.stat];
+    if (antagonist) {
+      scores[antagonist] -= (val - 3) * ANTAGONIST_WEIGHT;
+    }
+  });
+  STATS.forEach(s => {
+    scores[s.key] = Math.max(MIN_DISPLAY_SCORE, Math.min(MAX_DISPLAY_SCORE, scores[s.key]));
+  });
+  return scores;
+}
+
+function renderResult() {
+  const scores = computeScores();
+  resultCache = determineNature(scores);
+  const result = resultCache;
+  const maxScore = MAX_DISPLAY_SCORE;
+  const topKey = STATS.map(s => s.key).sort((a,b) => scores[b]-scores[a])[0];
+  const pool = NATURE_POOL[result.nature] || [];
+
+  // Kick off PokeAPI fetches only for whatever isn't already loaded, then
+  // re-render once so sprites/stats fill in. Guarding on "still pending"
+  // (rather than always chaining a re-render) matters: ensureMonData's
+  // promise is memoized, so re-running this unconditionally on every render
+  // would resolve instantly once cached and re-trigger itself forever.
+  const pending = pool.filter(mon => !MON_DATA[mon.name] || MON_DATA[mon.name].loading);
+  if (pending.length) {
+    Promise.all(pending.map(mon => ensureMonData(mon.name))).then(() => {
+      if (screen === 'result' && resultCache && resultCache.nature === result.nature) renderResult();
+    });
+  }
+
+  app.innerHTML = `
+    <div class="result-type">${result.type} Nature</div>
+    <div class="result-nature">${result.nature}</div>
+    <p style="margin-bottom:20px;">Trait totals (0-${MAX_DISPLAY_SCORE} each, after antagonist pull):</p>
+    ${STATS.map(s => `
+      <div class="bar-row">
+        <div class="bar-label">${s.name}</div>
+        <div class="bar-track"><div class="bar-fill ${s.key === topKey ? 'top' : ''}" style="width:${(scores[s.key]/maxScore)*100}%"></div></div>
+        <div class="bar-value">${scores[s.key]}</div>
+      </div>
+    `).join('')}
+    <details>
+      <summary>How this was calculated</summary>
+      <div class="debug">${result.log.join('\n')}</div>
+    </details>
+
+    <h2>Choose your Pokémon</h2>
+    <p style="margin-top:-6px;">These are the ${result.nature} Pokémon. Same core personality, individual variation. Pick one.</p>
+    <div class="poke-list" id="pokeList">
+      ${pool.map(mon => {
+        const d = MON_DATA[mon.name];
+        const sprite = d && d.loaded ? d.sprite : null;
+        let combatSection;
+        if (!d || d.loading) combatSection = '<div class="placeholder-box">Loading from PokeAPI…</div>';
+        else if (d.error) combatSection = '<div class="placeholder-box">Couldn\u2019t load stats from PokeAPI.</div>';
+        else combatSection = combatBars(combatStatsFromBase(d.base, false), true);
+        return `
+        <div class="poke-card ${mon.name === selectedMon ? 'selected' : ''} ${expandedPoolCard === mon.name ? 'expanded' : ''}" data-name="${mon.name}">
+          <div class="poke-card-top">
+            <div class="poke-card-top-text poke-card-top-text-with-sprite">
+              ${sprite ? `<img src="${sprite}" class="poke-sprite">` : '<div class="poke-sprite poke-sprite-empty"></div>'}
+              <div>
+                <div class="poke-name">${mon.name}</div>
+                <div class="poke-vibe">${mon.vibe}</div>
+              </div>
+            </div>
+            <button class="expand-toggle" type="button" aria-label="Expand details">▾</button>
+          </div>
+          <div class="poke-card-details">
+            <div class="poke-section-label">Personality</div>
+            ${personalityBars(mon.stats, true)}
+            <div class="poke-section-label">Combat</div>
+            ${combatSection}
+          </div>
+        </div>
+      `; }).join('')}
+    </div>
+    <div class="nav-row" style="margin-top:20px;">
+      <button class="nav" id="restartBtn">Retake test</button>
+      <button class="nav primary" id="finishBtn" ${selectedMon ? '' : 'disabled'}>Finish</button>
+    </div>
+  `;
+
+  document.querySelectorAll('.poke-card').forEach(card => {
+    const top = card.querySelector('.poke-card-top-text');
+    const toggle = card.querySelector('.expand-toggle');
+
+    top.onclick = () => {
+      selectedMon = card.dataset.name;
+      document.querySelectorAll('.poke-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('finishBtn').disabled = false;
+    };
+
+    toggle.onclick = (e) => {
+      e.stopPropagation();
+      card.classList.toggle('expanded');
+      expandedPoolCard = card.classList.contains('expanded') ? card.dataset.name : null;
+    };
+  });
+
+  document.getElementById('restartBtn').onclick = () => {
+    answers = new Array(QUESTIONS.length).fill(null);
+    qIndex = 0;
+    selectedMon = null;
+    expandedPoolCard = null;
+    screen = 'intro';
+    render();
+  };
+
+  document.getElementById('finishBtn').onclick = () => {
+    if (!selectedMon) return;
+    screen = 'detail';
+    render();
+  };
+}
+
+function renderDetail() {
+  const pool = NATURE_POOL[resultCache.nature] || [];
+  const mon = pool.find(m => m.name === selectedMon);
+  const d = mon ? MON_DATA[mon.name] : null;
+
+  // Should already be loaded (result screen prefetches the whole pool), but
+  // fetch now and refresh if this screen was somehow reached before that
+  // finished. Move types are only fetched once we actually need to show them.
+  // Each branch only re-renders when something was actually missing —
+  // ensureMonData/ensureMoveTypes promises are memoized, so re-triggering
+  // them unconditionally on every render would resolve instantly once
+  // cached and chain into an infinite render loop.
+  if (mon && (!d || d.loading)) {
+    ensureMonData(mon.name).then(() => {
+      if (screen === 'detail' && selectedMon === mon.name) renderDetail();
+    });
+  } else if (mon && d && d.loaded && d.movePool.length) {
+    const missingTypes = d.movePool.some(m => !MOVE_TYPE_CACHE.hasOwnProperty(m.slug));
+    if (missingTypes) {
+      ensureMoveTypes(d.movePool.map(m => m.slug)).then(() => {
+        if (screen === 'detail' && selectedMon === mon.name) renderDetail();
+      });
+    }
+  }
+
+  const loreSection = !d || d.loading
+    ? '<div class="placeholder-box">Loading from PokeAPI…</div>'
+    : d.error
+      ? '<div class="placeholder-box">Couldn\u2019t load lore from PokeAPI.</div>'
+      : `<p style="margin:0;">${d.lore || 'No Pokédex description available.'}</p>`;
+
+  const statsSection = !d || d.loading
+    ? '<div class="placeholder-box">Loading from PokeAPI…</div>'
+    : d.error
+      ? '<div class="placeholder-box">Couldn\u2019t load stats from PokeAPI.</div>'
+      : `
+        <div class="stats-grid">
+          <div>
+            <div class="poke-section-label">Personality</div>
+            ${personalityBars(mon.stats, false)}
+          </div>
+          <div>
+            <div class="poke-section-label">Combat</div>
+            <div class="poke-section-label" style="font-style:italic; text-transform:none; letter-spacing:normal; margin-bottom:8px;">For balancing purposes, Base HP x2</div>
+            ${combatBars(combatStatsFromBase(d.base, true), false)}
+          </div>
+        </div>`;
+
+  const movesetSection = !d || d.loading
+    ? '<div class="placeholder-box">Loading from PokeAPI…</div>'
+    : d.error
+      ? '<div class="placeholder-box">Couldn\u2019t load moveset from PokeAPI.</div>'
+      : !d.movePool.length
+        ? '<div class="placeholder-box">No level-up moves by level 5 — starts with Struggle only.</div>'
+        : `<div class="move-tag-list">${d.movePool.map(m => {
+            const type = MOVE_TYPE_CACHE[m.slug];
+            return `<span class="move-tag">${prettifySlug(m.slug)}${type ? ` <span class="type-badge">${type}</span>` : ''}</span>`;
+          }).join('')}</div>`;
+
+  const abilitySection = !d || d.loading
+    ? '<div class="placeholder-box">Loading from PokeAPI…</div>'
+    : d.error
+      ? '<div class="placeholder-box">Couldn\u2019t load ability from PokeAPI.</div>'
+      : !d.ability
+        ? '<div class="placeholder-box">This species has no listed abilities.</div>'
+        : `<span class="move-tag">${prettifySlug(d.ability.name)}${d.ability.hidden ? ' <span class="type-badge hidden-badge">Hidden</span>' : ''}</span>`;
+
+  app.innerHTML = `
+    <div class="result-type">${resultCache.nature} · ${mon ? mon.name : ''}</div>
+    ${d && d.loaded && d.artwork ? `<div class="hero"><img src="${d.artwork}" class="hero-img"></div>` : ''}
+    <h1 style="margin-top:0;">${mon ? mon.name : 'Unknown'}</h1>
+    <p>${mon ? mon.vibe : ''}</p>
+
+    <div class="detail-section">
+      <h3>Lore</h3>
+      ${loreSection}
+    </div>
+    <div class="detail-section">
+      <h3>Stats</h3>
+      ${statsSection}
+    </div>
+    <div class="detail-section">
+      <h3>Moveset</h3>
+      ${movesetSection}
+    </div>
+    <div class="detail-section">
+      <h3>Ability</h3>
+      ${abilitySection}
+    </div>
+
+    <div class="nav-row" style="margin-top:24px;">
+      <button class="nav" id="backToResultBtn">Choose a different Pokémon</button>
+      <button class="nav" id="restartBtn2">Retake test</button>
+    </div>
+  `;
+
+  document.getElementById('backToResultBtn').onclick = () => {
+    screen = 'result';
+    render();
+  };
+
+  document.getElementById('restartBtn2').onclick = () => {
+    answers = new Array(QUESTIONS.length).fill(null);
+    qIndex = 0;
+    selectedMon = null;
+    expandedPoolCard = null;
+    screen = 'intro';
+    render();
+  };
+}
+
+render();
+</script>
+
+</body>
+</html>

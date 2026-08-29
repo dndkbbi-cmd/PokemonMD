@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homebrew PMD</title>
+<style>
+  :root {
+    --bg: #15161a;
+    --panel: #1e2025;
+    --panel2: #24262c;
+    --border: #2c2f36;
+    --text: #e9e9ee;
+    --text-dim: #9a9ca5;
+    --accent: #8b93f8;
+    --accent-dim: #4a4f8f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wrap { max-width: 460px; width: 100%; text-align: center; }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .sub {
+    font-size: 14px; color: var(--text-dim); line-height: 1.6; margin: 0 0 32px;
+  }
+  .nav { display: flex; flex-direction: column; gap: 12px; }
+  .nav a {
+    display: block; text-decoration: none; color: var(--text);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; text-align: left; transition: border-color .15s, background .15s;
+  }
+  .nav a:hover { border-color: var(--accent-dim); background: var(--panel2); }
+  .nav a .t { font-size: 15px; font-weight: 600; }
+  .nav a .d { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+  .nav a.primary { border-color: var(--accent); background: rgba(139,147,248,0.08); }
+  .nav a.primary .t { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Homebrew Pokémon Mystery Dungeon</h1>
+  <p class="sub">A Pokémon Mystery Dungeon–style D&amp;D campaign, where you play as the Pokémon. Find out what you are, manage your sheet, or run the fight.</p>
+
+  <div class="nav">
+    <a class="primary" href="nature_test.html">
+      <div class="t">Take the Nature Test</div>
+      <div class="d">Find out what kind of Pokémon you are</div>
+    </a>
+    <a href="player_profile.html">
+      <div class="t">Player Profile</div>
+      <div class="d">Manage your stats, moves, ability, and inventory</div>
+    </a>
+    <a href="dm_combat_tool.html">
+      <div class="t">DM Combat Tool</div>
+      <div class="d">Run encounters and resolve actions</div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
